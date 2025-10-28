@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loveble - تست استعدادیابی شغلی هوشمند | کشف مسیر شغلی ایده‌آل</title>
+    <meta name="description" content="با تست استعدادیابی شغلی هوش مصنوعی Loveble، مسیر حرفه‌ای شخصی‌سازی‌شده و برنامه عملیاتی ۱۸۰ روزه دریافت کنید. مورد اعتماد بیش از ۱۸,۰۰۰ کاربر.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: 263 80% 55%;
+            --primary-glow: 280 85% 65%;
+            --background: 0 0% 100%;
+            --foreground: 0 0% 10%;
+            --secondary: 263 25% 95%;
+            --secondary-foreground: 263 70% 40%;
+            --muted: 263 15% 96%;
+            --muted-foreground: 0 0% 50%;
+            --border: 263 20% 90%;
+            --card: 0 0% 100%;
+            --card-foreground: 0 0% 10%;
+        }
+
+        body {
+            font-family: 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+
+        /* Home Page */
+        .home-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background:  linear-gradient(135deg, hsl(var(--background)) 0%, hsl(263, 30%, 98%) 100%);
+        }
+
+        .home-container {
+            max-width: 1000px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .home-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .home-title h1 {
+            font-size: 3.5rem;
+            color: hsl(var(--primary));
+            margin-bottom: 16px;
+        }
+
+        .home-title p {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .home-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .home-button {
+            background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+            border: none;
+            border-radius: 16px;
+            padding: 40px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: right;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .home-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px hsla(var(--primary), 0.3);
+        }
+
+        .home-button.secondary {
+            background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--muted)) 100%);
+        }
+
+        .home-button-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            margin-right: auto;
+        }
+
+        .home-button.secondary .home-button-icon {
+            background: hsla(var(--primary), 0.1);
+        }
+
+        .home-button h2 {
+            font-size: 1.75rem;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .home-button.secondary h2 {
+            color: hsl(var(--foreground));
+        }
+
+        .home-button p {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.95rem;
+        }
+
+        .home-button.secondary p {
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Test Flow */
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .progress-bar {
+            background: hsl(var(--secondary));
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .question-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .question-title {
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+            color: hsl(var(--foreground));
+        }
+
+        .option-button {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 2px solid hsl(var(--border));
+            background: hsl(var(--background));
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: right;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .option-button:hover {
+            border-color: hsl(var(--primary));
+            background: hsl(var(--secondary));
+        }
+
+        .option-button.selected {
+            border-color: hsl(var(--primary));
+            background: hsl(var(--secondary));
+            font-weight: 600;
+        }
+
+        .slider-container {
+            margin: 24px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: hsl(var(--secondary));
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: hsl(var(--primary));
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: hsl(var(--primary));
+            cursor: pointer;
+            border: none;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid hsl(var(--border));
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px hsla(var(--primary), 0.3);
+        }
+
+        .btn-secondary {
+            background: hsl(var(--secondary));
+            color: hsl(var(--foreground));
+        }
+
+        .btn-secondary:hover {
+            background: hsl(var(--muted));
+        }
+
+        /* Results Page */
+        .results-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .results-title {
+            font-size: 2.5rem;
+            color: hsl(var(--primary));
+            margin-bottom: 16px;
+        }
+
+        .results-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .career-item {
+            padding: 16px;
+            background: hsl(var(--secondary));
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .career-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: hsl(var(--primary));
+            margin-bottom: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .home-title h1 {
+                font-size: 2rem;
+            }
+
+            .home-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+        .slider {
+        /* --track-fill is a variable we will control with JavaScript */
+        background: linear-gradient(to left, hsl(var(--primary)) 0%, hsl(var(--primary)) var(--track-fill, 50%), hsl(var(--secondary)) var(--track-fill, 50%), hsl(var(--secondary)) 100%);
+        }
+        button, input, textarea, select {
+        font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Content -->
+    <div id="mainContent">
+        <!-- Home Page -->
+        <div id="homePage" class="page-content">
+            <div class="home-page">
+                <div class="home-container">
+                    <div class="home-title">
+                        <h1>کافنا</h1>
+                        <p>کشف مسیر شغلی ایده‌آل با تست استعدادیابی هوشمند</p>
+                    </div>
+                    <div class="home-buttons">
+                        <button class="home-button" onclick="navigateTo('skills-assessment')">
+                            <h2>شروع تست استعدادیابی</h2>
+                            <p>در کمتر از ۱۰ دقیقه، مسیر شغلی خود را کشف کنید</p>
+                        </button>
+                        <button class="home-button secondary" onclick="alert('این بخش در حال توسعه است')">
+                            <h2>در حال توسعه</h2>
+                            <p>به زودی راه‌اندازی می‌شود</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills Assessment Page -->
+        <div id="skillsAssessmentPage" class="page-content hidden">
+            <div class="test-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+                <div id="questionContainer"></div>
+                <div class="nav-buttons">
+                    <!-- ADD THIS NEW BUTTON -->
+                    <button class="btn btn-secondary" onclick="navigateTo('home')">انصراف</button> 
+                    <div> <!-- Wrap the existing buttons in a div for better layout -->
+                        <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()">قبلی</button>
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">بعدی</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Page -->
+        <div id="resultsPage" class="page-content hidden">
+            <div class="results-container">
+                <div class="results-header">
+                    <h1 class="results-title">نتایج تست استعدادیابی شما</h1>
+                    <p>مسیر شغلی شخصی‌سازی شده بر اساس پاسخ‌های شما</p>
+                </div>
+                <div id="resultsContent"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="navigateTo('home')">بازگشت به خانه</button>
+                    <button class="btn btn-primary" onclick="downloadResults()">دانلود نتایج</button>
+                    <button class="btn btn-primary" onclick="shareResults()">اشتراک‌گذاری</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // =================================================
+        // 1. STATE VARIABLES
+        // =================================================
+        let currentQuestion = 0;
+        let answers = {};
+        let currentPage = 'home';
+        let questions = [];
+
+        // =================================================
+        // 2. CORE FUNCTIONS
+        // =================================================
+
+        function init() {
+            updateActiveMenuItem();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function navigateTo(page) {
+            document.querySelectorAll('.page-content').forEach(p => {
+                p.classList.add('hidden');
+            });
+
+            let pageId;
+            if (page === 'home') { pageId = 'homePage'; } 
+            else if (page === 'skills-assessment') { pageId = 'skillsAssessmentPage'; } 
+            else { pageId = page.replace(/-(\w)/g, (m, g) => g.toUpperCase()) + 'Page'; }
+            
+            const pageElement = document.getElementById(pageId);
+            
+            if (pageElement) {
+                pageElement.classList.remove('hidden');
+            } else {
+                console.error(`Navigation Error: Could not find element with ID: ${pageId}`);
+                return;
+            }
+
+            if (page === 'skills-assessment') {
+                startTest();
+            }
+
+            currentPage = page;
+            updateActiveMenuItem();
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+        }
+
+        function updateActiveMenuItem() {
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === currentPage) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(item.dataset.page);
+            });
+        });
+
+        function startTest() {
+            currentQuestion = 0;
+            answers = {};
+            fetch('/api/questions/')
+                .then(response => response.json())
+                .then(data => {
+                    questions = data;
+                    if (questions && questions.length > 0) {
+                        renderQuestion();
+                    } else {
+                        document.getElementById('questionContainer').innerHTML = "<p>No questions are available.</p>";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching questions:', error);
+                    document.getElementById('questionContainer').innerHTML = "<p>Could not load questions.</p>";
+                });
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            const container = document.getElementById('questionContainer');
+            if (!container) return;
+
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            let html = `<div class="question-card">
+                <p style="color: hsl(var(--muted-foreground)); margin-bottom: 8px;">سوال ${currentQuestion + 1} از ${questions.length}</p>
+                <h2 class="question-title">${q.question}</h2>`;
+
+            if (q.type === 'multiple') {
+                html += '<div>';
+                q.options.forEach((opt) => {
+                    const selected = answers[q.id] === opt ? 'selected' : '';
+                    const escapedOpt = opt.replace(/'/g, "\\'");
+                    html += `<button class="option-button ${selected}" onclick="selectOption(${q.id}, '${escapedOpt}')">${opt}</button>`;
+                });
+                html += '</div>';
+            } else if (q.type === 'slider') {
+                const value = answers[q.id] || 5;
+                html += `<div class="slider-container">
+                    <input type="range" class="slider" min="${q.min}" max="${q.max}" value="${value}" oninput="updateSlider(${q.id}, this)">
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-weight: 600;">
+                        <span>${q.min}</span>
+                        <span id="sliderValue-${q.id}">${value}</span>
+                        <span>${q.max}</span>
+                    </div>
+                    <!-- NEW: Agree/Disagree Labels -->
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: hsl(var(--muted-foreground)); padding: 0 4px;">
+                        <span>کاملا مخالفم</span>
+                        <span>کاملا موافقم</span>
+                    </div>
+                </div>`;
+            } else if (q.type === 'text') {
+                const value = answers[q.id] || '';
+                html += `<input type="text" class="input-field" value="${value}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            if (q.type === 'slider') {
+                const sliderElement = container.querySelector('.slider');
+                updateSliderVisuals(sliderElement);
+            }
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'مشاهده نتایج' : 'بعدی';
+        }
+
+        function selectOption(id, option) { answers[id] = option; renderQuestion(); }
+        
+        function updateSlider(id, sliderElement) {
+            const value = parseInt(sliderElement.value);
+            answers[id] = value;
+            document.getElementById('sliderValue-' + id).textContent = value;
+            updateSliderVisuals(sliderElement);
+        }
+
+        function updateSliderVisuals(sliderElement) {
+            if (!sliderElement) return;
+            const min = parseInt(sliderElement.min);
+            const max = parseInt(sliderElement.max);
+            const value = parseInt(sliderElement.value);
+            const percentage = ((value - min) / (max - min)) * 100;
+            sliderElement.style.setProperty('--track-fill', `${percentage}%`);
+        }
+
+        function updateText(id, value) { answers[id] = value; }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                submitAnswers();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+        
+        function submitAnswers() {
+            fetch('/api/submit-answers/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(answers)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Submission successful:', data);
+                showResults();
+            })
+            .catch(error => {
+                console.error('Error submitting answers:', error);
+                alert('Could not save your results, but you can still view them.');
+                showResults();
+            });
+        }
+
+        // NEW: Fully functional results page
+        function showResults() {
+            navigateTo('results');
+            const resultsContent = document.getElementById('resultsContent');
+            if (!resultsContent) return;
+
+            let resultsHtml = `
+                <div class="results-card">
+                    <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">خلاصه پاسخ‌های شما</h2>
+            `;
+
+            questions.forEach(q => {
+                const answer = answers[q.id];
+                const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
+
+                resultsHtml += `
+                    <div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
+                        <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p>
+                        <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">
+                            ${answerText}
+                        </p>
+                    </div>
+                `;
+            });
+
+            resultsHtml += `</div>`;
+            resultsContent.innerHTML = resultsHtml;
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
