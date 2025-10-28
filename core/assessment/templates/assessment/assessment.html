@@ -365,6 +365,23 @@
             </div>
         </div>
 
+        <div id="userInfoPage" class="page-content hidden">
+            <div class="test-container" style="padding-top: 80px;">
+                <div class="question-card">
+                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">اطلاعات شما</h2>
+                    <div style="margin-bottom: 16px;">
+                        <label for="userName" style="display: block; margin-bottom: 8px;">نام و نام خانوادگی</label>
+                        <input type="text" id="userName" class="input-field" placeholder="نام خود را وارد کنید...">
+                    </div>
+                    <div style="margin-bottom: 32px;">
+                        <label for="userPhone" style="display: block; margin-bottom: 8px;">شماره تماس</label>
+                        <input type="tel" id="userPhone" class="input-field" placeholder="شماره تماس خود را وارد کنید...">
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="startAssessment()">ادامه و شروع تست</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Skills Assessment Page -->
         <div id="skillsAssessmentPage" class="page-content hidden">
             <div class="test-container">
@@ -428,8 +445,10 @@
             });
 
             let pageId;
-            if (page === 'home') { pageId = 'homePage'; } 
-            else if (page === 'skills-assessment') { pageId = 'skillsAssessmentPage'; } 
+            if (page === 'home') { pageId = 'homePage'; }
+            else if (page === 'skills-assessment') { pageId = 'skillsAssessmentPage'; }
+            // NEW: Handle the new user-info page
+            else if (page === 'user-info') { pageId = 'userInfoPage'; }
             else { pageId = page.replace(/-(\w)/g, (m, g) => g.toUpperCase()) + 'Page'; }
             
             const pageElement = document.getElementById(pageId);
@@ -441,9 +460,8 @@
                 return;
             }
 
-            if (page === 'skills-assessment') {
-                startTest();
-            }
+            // We no longer start the test directly from here
+            // if (page === 'skills-assessment') { startTest(); }
 
             currentPage = page;
             updateActiveMenuItem();
@@ -451,6 +469,27 @@
                 toggleSidebar();
             }
         }
+        
+        // NEW: Function to handle user info submission and start the test
+        function startAssessment() {
+            const userName = document.getElementById('userName').value;
+            const userPhone = document.getElementById('userPhone').value;
+
+            // Basic validation
+            if (!userName || !userPhone) {
+                alert('لطفا نام و شماره تماس خود را وارد کنید.');
+                return;
+            }
+
+            // Store user info in our answers object
+            answers['user_name'] = userName;
+            answers['user_phone'] = userPhone;
+
+            // Now, navigate to the test and fetch the questions
+            navigateTo('skills-assessment');
+            startTest();
+        }
+
 
         function updateActiveMenuItem() {
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -468,9 +507,13 @@
             });
         });
 
+        // The main "Start Test" button on the homepage should now point to the user info page
+        document.querySelector('.home-button[onclick*="skills-assessment"]').setAttribute('onclick', "navigateTo('user-info')");
+
+
         function startTest() {
             currentQuestion = 0;
-            answers = {};
+            // Note: We no longer reset 'answers' here, so we keep the user info
             fetch('/api/questions/')
                 .then(response => response.json())
                 .then(data => {
@@ -516,7 +559,6 @@
                         <span id="sliderValue-${q.id}">${value}</span>
                         <span>${q.max}</span>
                     </div>
-                    <!-- NEW: Agree/Disagree Labels -->
                     <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: hsl(var(--muted-foreground)); padding: 0 4px;">
                         <span>کاملا مخالفم</span>
                         <span>کاملا موافقم</span>
@@ -593,29 +635,28 @@
             });
         }
 
-        // NEW: Fully functional results page
         function showResults() {
             navigateTo('results');
             const resultsContent = document.getElementById('resultsContent');
             if (!resultsContent) return;
 
-            let resultsHtml = `
-                <div class="results-card">
-                    <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">خلاصه پاسخ‌های شما</h2>
+            let resultsHtml = `<div class="results-card">
+                <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">خلاصه پاسخ‌های شما</h2>
+                <div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
+                    <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">نام شما:</p>
+                    <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary));">${answers.user_name || 'ثبت نشده'}</p>
+                </div>
             `;
 
             questions.forEach(q => {
                 const answer = answers[q.id];
                 const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
-
-                resultsHtml += `
-                    <div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
-                        <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p>
-                        <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">
-                            ${answerText}
-                        </p>
-                    </div>
-                `;
+                resultsHtml += `<div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
+                    <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p>
+                    <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">
+                        ${answerText}
+                    </p>
+                </div>`;
             });
 
             resultsHtml += `</div>`;

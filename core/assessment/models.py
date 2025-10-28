@@ -1,4 +1,14 @@
 from django.db import models
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+
+# NEW: Custom encoder to preserve Persian characters
+class UnsafeJSONEncoder(DjangoJSONEncoder):
+    def __init__(self, *args, **kwargs):
+        # Set ensure_ascii to False to allow non-ASCII characters
+        kwargs['ensure_ascii'] = False
+        super().__init__(*args, **kwargs)
+
 
 class Question(models.Model):
     """
@@ -41,7 +51,7 @@ class AssessmentResult(models.Model):
     # In a real app, you would link this to a user with:
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
     
-    answers = models.JSONField() # Stores the answers object as JSON
+    answers = models.JSONField(encoder=UnsafeJSONEncoder) # Stores the answers object as JSON
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

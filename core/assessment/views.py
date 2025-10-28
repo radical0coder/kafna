@@ -36,14 +36,13 @@ def get_questions_api(request):
         
     return JsonResponse(questions_list, safe=False)
 
-@csrf_exempt # Important: For APIs, we often handle CSRF differently.
+@csrf_exempt
 def submit_answers_api(request):
     if request.method == 'POST':
         try:
-            # Load the JSON data from the request body
+            # Load the JSON from the request into a Python dictionary
             data = json.loads(request.body)
             
-            # Create a new AssessmentResult record
             AssessmentResult.objects.create(answers=data)
             
             return JsonResponse({'status': 'success', 'message': 'Results saved successfully.'})
