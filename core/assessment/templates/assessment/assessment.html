@@ -440,34 +440,23 @@
         }
 
         function navigateTo(page) {
-            document.querySelectorAll('.page-content').forEach(p => {
-                p.classList.add('hidden');
-            });
-
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
             let pageId;
             if (page === 'home') { pageId = 'homePage'; }
             else if (page === 'skills-assessment') { pageId = 'skillsAssessmentPage'; }
-            // NEW: Handle the new user-info page
             else if (page === 'user-info') { pageId = 'userInfoPage'; }
+            else if (page === 'results') { pageId = 'resultsPage'; }
             else { pageId = page.replace(/-(\w)/g, (m, g) => g.toUpperCase()) + 'Page'; }
-            
             const pageElement = document.getElementById(pageId);
-            
-            if (pageElement) {
-                pageElement.classList.remove('hidden');
-            } else {
-                console.error(`Navigation Error: Could not find element with ID: ${pageId}`);
-                return;
+            if (pageElement) { 
+                pageElement.classList.remove('hidden'); 
+            } else { 
+                console.error(`Navigation Error: Could not find element with ID: ${pageId}`); 
+                return; 
             }
-
-            // We no longer start the test directly from here
-            // if (page === 'skills-assessment') { startTest(); }
-
             currentPage = page;
             updateActiveMenuItem();
-            if (window.innerWidth < 768) {
-                toggleSidebar();
-            }
+            // REMOVED: if (window.innerWidth < 768) { toggleSidebar(); }
         }
         
         // NEW: Function to handle user info submission and start the test
