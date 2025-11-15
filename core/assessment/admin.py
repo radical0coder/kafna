@@ -19,39 +19,37 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(AssessmentResult)
 class AssessmentResultAdmin(admin.ModelAdmin):
-    list_display = ('get_user_name', 'created_at')
-    readonly_fields = ('pretty_answers', 'created_at')
-    exclude = ('answers',)
+    list_display = ('user_name', 'user_phone', 'created_at', 'answers_summary')
+    list_filter = ('created_at',)
+    search_fields = ('user_name', 'user_phone', 'answers__question', 'answers__answer')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
 
-    def get_user_name(self, obj):
+    def answers_summary(self, obj):
         """
-        Safely reads the user's name from the answers JSON,
-        handling cases where the data is a string or a dictionary.
+        Show a clean preview of answers in admin list view.
+        Uses format_html() for safe HTML rendering.
         """
-        answers_data = obj.answers
-        # THE FIX: Check if the data is a string. If so, parse it.
-        if isinstance(answers_data, str):
-            try:
-                answers_data = json.loads(answers_data)
-            except json.JSONDecodeError:
-                # Handle cases of corrupted data
-                return 'Invalid JSON'
-        
-        # Now we can be sure answers_data is a dictionary
-        return answers_data.get('user_name', 'N/A')
-    
-    get_user_name.short_description = 'User Name'
+        if not obj.answers or not isinstance(obj.answers, list):
+            return "—"
 
-    def pretty_answers(self, instance):
-        # This function also needs the same safety check
-        answers_data = instance.answers
-        if isinstance(answers_data, str):
-            try:
-                answers_data = json.loads(answers_data)
-            except json.JSONDecodeError:
-                return 'Invalid JSON'
+        # Limit to first 3 answers
+        items = obj.answers[:3]
+        lines = []
 
-        pretty_json = json.dumps(answers_data, indent=4, ensure_ascii=False)
-        return format_html('<pre>{}</pre>', pretty_json)
-    
-    pretty_answers.short_description = 'User Answers'
+        for item in items:
+            question = (item.get('question') or '')[:60]  # truncate long text
+            answer = str(item.get('answer') or '—')
+            lines.append(f"{question} → {answer}")
+
+        summary = "<br>".join(lines)
+
+        # Add "..." if more answers exist
+        if len(obj.answers) > 3:
+            summary += f"<br><em>... و {len(obj.answers) - 3} مورد دیگر</em>"
+
+        # Use format_html for safe HTML
+        return format_html(summary)
+
+    answers_summary.short_description = "پاسخ‌ها"
+    answers_summary.admin_order_field = 'created_at'  # optional sorting

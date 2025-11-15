@@ -607,20 +607,39 @@
         }
         
         function submitAnswers() {
+            // Build rich answers with question text
+            const richAnswers = questions.map(q => ({
+                id: q.id,
+                question: q.question,
+                answer: answers[q.id] ?? null  // null if unanswered
+            }));
+
+            const payload = {
+                user_name: answers.user_name || '',
+                user_phone: answers.user_phone || '',
+                answers: richAnswers
+            };
+
             fetch('/api/submit-answers/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(answers)
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify(payload)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
             .then(data => {
-                console.log('Submission successful:', data);
-                showResults();
+                console.log('Answers saved:', data);
+                showResults();  // your existing function
             })
-            .catch(error => {
-                console.error('Error submitting answers:', error);
-                alert('Could not save your results, but you can still view them.');
-                showResults();
+            .catch(err => {
+                console.error('Submit failed:', err);
+                alert('نتایج ذخیره نشد، اما می‌توانید آن‌ها را ببینید.');
+                showResults();  // show anyway
             });
         }
 

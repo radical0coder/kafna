@@ -21,9 +21,7 @@ class Question(models.Model):
     ]
 
     question_text = models.CharField(max_length=500)
-    # This field determines how the question is rendered in the frontend.
     question_type = models.CharField(max_length=10, choices=QUESTION_TYPES, default='multiple')
-    # Use 'order' to control the sequence of questions.
     order = models.PositiveIntegerField(default=0, help_text="Determines the order in which questions are displayed.")
 
     class Meta:
@@ -44,15 +42,12 @@ class Choice(models.Model):
     def __str__(self):
         return self.choice_text
     
-class AssessmentResult(models.Model):
-    """
-    Stores the answers submitted by a user for an assessment.
-    """
-    # In a real app, you would link this to a user with:
-    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     
-    answers = models.JSONField(encoder=UnsafeJSONEncoder) # Stores the answers object as JSON
+class AssessmentResult(models.Model):
+    user_name = models.CharField(max_length=100, blank=True)
+    user_phone = models.CharField(max_length=20, blank=True)
+    answers = models.JSONField()  # stores full list with question text
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Result submitted at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.user_name} - {self.created_at}"

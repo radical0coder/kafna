@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from .models import Question, AssessmentResult
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 # This view serves the main HTML page (the "shell")
 def assessment_view(request):
@@ -37,16 +38,21 @@ def get_questions_api(request):
     return JsonResponse(questions_list, safe=False)
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def submit_answers_api(request):
-    if request.method == 'POST':
-        try:
-            # Load the JSON from the request into a Python dictionary
-            data = json.loads(request.body)
-            
-            AssessmentResult.objects.create(answers=data)
-            
-            return JsonResponse({'status': 'success', 'message': 'Results saved successfully.'})
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    try:
+        data = json.loads(request.body)
+        
+        # Save to DB (you can expand this model later)
+        AssessmentResult.objects.create(
+            user_name=data.get('user_name', ''),
+            user_phone=data.get('user_phone', ''),
+            answers=data.get('answers', [])  # now list of dicts
+        )
+
+        return JsonResponse({"status": "success", "message": "نتایج با موفقیت ذخیره شد."})
     
-    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=405)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "داده نامعتبر"}, status=400)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
