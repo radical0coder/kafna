@@ -456,42 +456,54 @@ function navigateTo(page) {
    ------------------------------------------------- */
 function submitAnswers() {
     showPage('results');
-    const resultsContainer = document.getElementById('resultsContent');
-    resultsContainer.innerHTML = '<p style="text-align: center; font-size: 1.2rem;">در حال تحلیل پاسخ‌ها... لطفاً چند لحظه صبر کنید.</p>';
+    const container = document.getElementById('resultsContent');
+    container.innerHTML = '<p style="text-align:center;font-size:1.2rem;">در حال تحلیل پاسخ‌ها... لطفاً صبر کنید.</p>';
 
-    const submissionData = {
-        user_name: answers.user_name, user_phone: answers.user_phone
+    // 1. Build the rich list
+    const richAnswers = questions.map(q => ({
+        id: q.id,
+        question: q.question,
+        answer: answers[q.id] ?? null
+    }));
+
+    const payload = {
+        user_name: answers.user_name || "",
+        user_phone: answers.user_phone || "",
+        answers: richAnswers
     };
-    questions.forEach(q => {
-        if (answers[q.id] !== undefined) { submissionData[q.id] = answers[q.id]; }
-    });
 
-    // THE FIX: This now correctly finds the token from the hidden input
-    const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (!csrfTokenInput) {
-        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">خطای امنیتی: توکن یافت نشد. لطفاً صفحه را رفرش کنید.</p>';
+    // 2. CSRF token (must be present in the page)
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (!csrfToken) {
+        container.innerHTML = '<p style="color:red;text-align:center;">خطای امنیتی: توکن یافت نشد.</p>';
         return;
     }
 
+    // 3. POST
     fetch('/api/get-ai-analysis/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfTokenInput.value
+            'X-CSRFToken': csrfToken
         },
-        body: JSON.stringify(submissionData)
+        body: JSON.stringify(payload)
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
     .then(data => {
         if (data.status === 'success') {
-            showResults(submissionData, data.analysis);
+            showResults(payload, data.analysis);
         } else {
-            resultsContainer.innerHTML = `<p style="text-align: center; color: red;">خطا در تحلیل پاسخ‌ها: ${data.message}</p>`;
+            throw new Error(data.message || "Unknown error");
         }
     })
     .catch(err => {
         console.error(err);
-        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">یک خطای غیرمنتظره رخ داد. لطفاً دوباره تلاش کنید.</p>';
+        container.innerHTML = `<p style="color:red;text-align:center;">
+            خطا در دریافت تحلیل: ${err.message}. می‌توانید دوباره امتحان کنید.
+        </p>`;
     });
 }
 

@@ -45,15 +45,13 @@ class Choice(models.Model):
         return self.choice_text
     
 class AssessmentResult(models.Model):
-    
-    answers = models.JSONField(encoder=UnsafeJSONEncoder)
-    
-    # NEW: Add a field to store the AI's response
-    ai_analysis = models.JSONField(encoder=UnsafeJSONEncoder, null=True, blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
+    user_name   = models.CharField(max_length=100, blank=True)
+    user_phone  = models.CharField(max_length=20,  blank=True)
+    # NEW: list of dicts → {id, question, answer}
+    answers     = models.JSONField(default=list)
+    # NEW: AI analysis (JSON from your LLM)
+    ai_analysis = models.JSONField(null=True, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        # We can use the user's name from the JSON for a nice display name.
-        user_name = self.answers.get('user_name', 'Anonymous')
-        return f"Result for {user_name} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.user_name or 'بدون نام'} – {self.created_at:%Y-%m-%d %H:%M}"

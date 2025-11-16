@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from .models import Question, AssessmentResult
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 # This view serves the main HTML page (the "shell")
 def assessment_view(request):
@@ -51,23 +52,49 @@ def submit_answers_api(request):
     return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=405)
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
 def get_ai_analysis_view(request):
     """
-    API endpoint that gets an AI analysis AND saves the complete result anonymously.
+    1. Receives: {user_name, user_phone, answers: [{id,question,answer}, …]}
+    2. Calls LLM → `ai_analysis`
+    3. Saves **both** to AssessmentResult (no user required)
+    4. Returns the analysis for instant rendering
     """
-    if request.method == 'POST':
-        try:
-            answers_data = json.loads(request.body)
-            ai_analysis = get_ai_analysis(answers_data)
+    try:
+        data = json.loads(request.body)
 
-            # THE FIX: We create the AssessmentResult without any user.
-            AssessmentResult.objects.create(
-                answers=answers_data,
-                ai_analysis=ai_analysis
-            )
+        # ------------------------------------------------------------------
+        #  Build the *rich* answers list (front-end already sends it)
+        # ------------------------------------------------------------------
+        answers_list = data.get("answers", [])
+        if not isinstance(answers_list, list):
+            raise ValueError("answers must be a list")
 
-            return JsonResponse({'status': 'success', 'analysis': ai_analysis})
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    
-    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=405)
+        # ------------------------------------------------------------------
+        #  Call LLM
+        # ------------------------------------------------------------------
+        ai_analysis = get_ai_analysis(answers_list)
+
+        # ------------------------------------------------------------------
+        #  Save everything anonymously
+        # ------------------------------------------------------------------
+        AssessmentResult.objects.create(
+            user_name=data.get("user_name", ""),
+            user_phone=data.get("user_phone", ""),
+            answers=answers_list,
+            ai_analysis=ai_analysis
+        )
+
+        return JsonResponse({
+            "status": "success",
+            "analysis": ai_analysis
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    # GET not allowed
+    return JsonResponse({"status": "error", "message": "Only POST allowed"}, status=405)

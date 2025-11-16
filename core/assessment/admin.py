@@ -21,30 +21,37 @@ class QuestionAdmin(admin.ModelAdmin):
 class AssessmentResultAdmin(admin.ModelAdmin):
     # THE FIX: We use the object's __str__ method for the display, which is clean.
     list_display = ('__str__', 'created_at', 'has_ai_analysis')
-    
     readonly_fields = ('pretty_answers', 'pretty_ai_analysis', 'created_at')
     exclude = ('answers', 'ai_analysis')
 
     def pretty_answers(self, instance):
-        # ... (this function remains the same and is correct)
         answers_data = instance.answers
         if isinstance(answers_data, str):
-            try: answers_data = json.loads(answers_data)
-            except json.JSONDecodeError: return 'Invalid JSON'
+            try:
+                answers_data = json.loads(answers_data)
+            except json.JSONDecodeError:
+                return 'Invalid JSON'
         pretty_json = json.dumps(answers_data, indent=4, ensure_ascii=False)
-        return format_html('<pre>{}</pre>', pretty_json)
+        return format_html(
+            '<pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 100%; overflow-x: auto;">{}</pre>',
+            pretty_json
+        )
     pretty_answers.short_description = 'User Answers'
 
     def pretty_ai_analysis(self, instance):
-        # ... (this function remains the same and is correct)
         if not instance.ai_analysis:
             return "No analysis generated."
         analysis_data = instance.ai_analysis
         if isinstance(analysis_data, str):
-            try: analysis_data = json.loads(analysis_data)
-            except json.JSONDecodeError: return 'Invalid JSON'
+            try:
+                analysis_data = json.loads(analysis_data)
+            except json.JSONDecodeError:
+                return 'Invalid JSON'
         pretty_json = json.dumps(analysis_data, indent=4, ensure_ascii=False)
-        return format_html('<pre>{}</pre>', pretty_json)
+        return format_html(
+            '<pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 100%; overflow-x: auto;">{}</pre>',
+            pretty_json
+        )
     pretty_ai_analysis.short_description = 'AI Analysis'
 
     def has_ai_analysis(self, obj):
