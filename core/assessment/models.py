@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.serializers.json import DjangoJSONEncoder
-import json
+
 
 # NEW: Custom encoder to preserve Persian characters
 class UnsafeJSONEncoder(DjangoJSONEncoder):
@@ -45,14 +45,15 @@ class Choice(models.Model):
         return self.choice_text
     
 class AssessmentResult(models.Model):
-    """
-    Stores the answers submitted by a user for an assessment.
-    """
-    # In a real app, you would link this to a user with:
-    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     
-    answers = models.JSONField(encoder=UnsafeJSONEncoder) # Stores the answers object as JSON
+    answers = models.JSONField(encoder=UnsafeJSONEncoder)
+    
+    # NEW: Add a field to store the AI's response
+    ai_analysis = models.JSONField(encoder=UnsafeJSONEncoder, null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Result submitted at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        # We can use the user's name from the JSON for a nice display name.
+        user_name = self.answers.get('user_name', 'Anonymous')
+        return f"Result for {user_name} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"

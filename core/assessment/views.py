@@ -1,6 +1,5 @@
-# assessment/views.py
-
 import json
+from .ai import get_ai_analysis
 from django.http import JsonResponse
 from django.shortcuts import render
 from .models import Question, AssessmentResult
@@ -30,7 +29,7 @@ def get_questions_api(request):
             question_data['options'] = [choice.choice_text for choice in q.choices.all()]
         elif q.question_type == 'slider':
             question_data['min'] = 1
-            question_data['max'] = 10
+            question_data['max'] = 5
         
         questions_list.append(question_data)
         
@@ -46,6 +45,28 @@ def submit_answers_api(request):
             AssessmentResult.objects.create(answers=data)
             
             return JsonResponse({'status': 'success', 'message': 'Results saved successfully.'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    
+    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=405)
+
+
+def get_ai_analysis_view(request):
+    """
+    API endpoint that gets an AI analysis AND saves the complete result anonymously.
+    """
+    if request.method == 'POST':
+        try:
+            answers_data = json.loads(request.body)
+            ai_analysis = get_ai_analysis(answers_data)
+
+            # THE FIX: We create the AssessmentResult without any user.
+            AssessmentResult.objects.create(
+                answers=answers_data,
+                ai_analysis=ai_analysis
+            )
+
+            return JsonResponse({'status': 'success', 'analysis': ai_analysis})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     

@@ -369,6 +369,9 @@
             <div class="test-container" style="padding-top: 80px;">
                 <div class="question-card">
                     <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">اطلاعات شما</h2>
+
+                        {% csrf_token %}
+
                     <div style="margin-bottom: 16px;">
                         <label for="userName" style="display: block; margin-bottom: 8px;">نام و نام خانوادگی</label>
                         <input type="text" id="userName" class="input-field" placeholder="نام خود را وارد کنید...">
@@ -419,241 +422,179 @@
     </div>
 
     <script>
-        // =================================================
-        // 1. STATE VARIABLES
-        // =================================================
-        let currentQuestion = 0;
-        let answers = {};
-        let currentPage = 'home';
-        let questions = [];
+/* -------------------------------------------------
+   STATE
+   ------------------------------------------------- */
+let currentQuestion = 0;
+let answers       = {};
+let questions     = [];
 
-        // =================================================
-        // 2. CORE FUNCTIONS
-        // =================================================
+/* -------------------------------------------------
+   PAGE NAVIGATION (This was missing / causing errors)
+   ------------------------------------------------- */
+function showPage(page) {
+    document.querySelectorAll('.page-content')
+            .forEach(p => p.classList.add('hidden'));
+    const id = {
+        home: 'homePage', 'user-info': 'userInfoPage',
+        'skills-assessment': 'skillsAssessmentPage', results: 'resultsPage'
+    }[page];
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hidden');
+    else console.error('Page not found:', page);
+}
+// We need navigateTo for the buttons on the results page
+function navigateTo(page) {
+    // For now, a simple redirect is the most robust solution
+    if (page === 'home') {
+        window.location.href = '/';
+    }
+}
 
-        function init() {
-            updateActiveMenuItem();
+/* -------------------------------------------------
+   FORM SUBMIT (API Call)
+   ------------------------------------------------- */
+function submitAnswers() {
+    showPage('results');
+    const resultsContainer = document.getElementById('resultsContent');
+    resultsContainer.innerHTML = '<p style="text-align: center; font-size: 1.2rem;">در حال تحلیل پاسخ‌ها... لطفاً چند لحظه صبر کنید.</p>';
+
+    const submissionData = {
+        user_name: answers.user_name, user_phone: answers.user_phone
+    };
+    questions.forEach(q => {
+        if (answers[q.id] !== undefined) { submissionData[q.id] = answers[q.id]; }
+    });
+
+    // THE FIX: This now correctly finds the token from the hidden input
+    const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfTokenInput) {
+        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">خطای امنیتی: توکن یافت نشد. لطفاً صفحه را رفرش کنید.</p>';
+        return;
+    }
+
+    fetch('/api/get-ai-analysis/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfTokenInput.value
+        },
+        body: JSON.stringify(submissionData)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showResults(submissionData, data.analysis);
+        } else {
+            resultsContainer.innerHTML = `<p style="text-align: center; color: red;">خطا در تحلیل پاسخ‌ها: ${data.message}</p>`;
         }
+    })
+    .catch(err => {
+        console.error(err);
+        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">یک خطای غیرمنتظره رخ داد. لطفاً دوباره تلاش کنید.</p>';
+    });
+}
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-        }
+/* -------------------------------------------------
+   SHOW RESULTS (Renders the AI Analysis)
+   ------------------------------------------------- */
+function showResults(userData, analysis) {
+    const container = document.getElementById('resultsContent');
+    if (!container) return;
+    const userName = userData.user_name || 'کاربر مهمان';
+    document.querySelector('#resultsPage .results-header p').textContent = 
+        `${userName} عزیز، این تحلیل اختصاصی بر اساس پاسخ‌های شما آماده شده است.`;
+    let html = `
+        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">تحلیل کلی</h2><p style="line-height: 1.8;">${analysis.analysis}</p></div>
+        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">مسیرهای شغلی پیشنهادی</h2>
+            ${analysis.recommended_jobs.map(career => `<div class="career-item"><div class="career-title">${career.job}</div><p style="color: hsl(var(--muted-foreground));">${career.reason}</p></div>`).join('') || '<p>شغلی برای پیشنهاد یافت نشد.</p>'}
+        </div>
+        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">نقاط کلیدی برای توسعه</h2><ul style="list-style-type: none; padding-right: 10px;">
+                ${analysis.development_points.map(point => `<li style="margin-bottom: 12px; font-weight: 500;">✓ ${point}</li>`).join('') || '<p>نقطه‌ای برای توسعه یافت نشد.</p>'}
+            </ul></div>
+        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">خلاصه مسیر شغلی</h2><p style="line-height: 1.8;">${analysis.career_path}</p></div>
+    `;
+    container.innerHTML = html;
+}
 
-        function navigateTo(page) {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-            let pageId;
-            if (page === 'home') { pageId = 'homePage'; }
-            else if (page === 'skills-assessment') { pageId = 'skillsAssessmentPage'; }
-            else if (page === 'user-info') { pageId = 'userInfoPage'; }
-            else if (page === 'results') { pageId = 'resultsPage'; }
-            else { pageId = page.replace(/-(\w)/g, (m, g) => g.toUpperCase()) + 'Page'; }
-            const pageElement = document.getElementById(pageId);
-            if (pageElement) { 
-                pageElement.classList.remove('hidden'); 
-            } else { 
-                console.error(`Navigation Error: Could not find element with ID: ${pageId}`); 
-                return; 
-            }
-            currentPage = page;
-            updateActiveMenuItem();
-            // REMOVED: if (window.innerWidth < 768) { toggleSidebar(); }
-        }
-        
-        // NEW: Function to handle user info submission and start the test
-        function startAssessment() {
-            const userName = document.getElementById('userName').value;
-            const userPhone = document.getElementById('userPhone').value;
-
-            // Basic validation
-            if (!userName || !userPhone) {
-                alert('لطفا نام و شماره تماس خود را وارد کنید.');
-                return;
-            }
-
-            // Store user info in our answers object
-            answers['user_name'] = userName;
-            answers['user_phone'] = userPhone;
-
-            // Now, navigate to the test and fetch the questions
-            navigateTo('skills-assessment');
-            startTest();
-        }
-
-
-        function updateActiveMenuItem() {
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.dataset.page === currentPage) {
-                    item.classList.add('active');
-                }
-            });
-        }
-
-        document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                navigateTo(item.dataset.page);
-            });
+/* -------------------------------------------------
+   The rest of your script (startAssessment, loadQuestions, renderQuestion, etc.)
+   is correct and does not need to change. Paste it here.
+   ------------------------------------------------- */
+function startAssessment() {
+    const name = document.getElementById('userName').value.trim();
+    const phone = document.getElementById('userPhone').value.trim();
+    if (!name || !phone) { alert('لطفا نام و شماره تماس خود را وارد کنید.'); return; }
+    answers.user_name  = name;
+    answers.user_phone = phone;
+    showPage('skills-assessment');
+    loadQuestions();
+}
+function loadQuestions() {
+    currentQuestion = 0;
+    fetch('/api/questions/').then(r => r.json()).then(data => {
+        questions = data;
+        if (questions.length) renderQuestion();
+        else document.getElementById('questionContainer').innerHTML = '<p>سوالی برای نمایش وجود ندارد.</p>';
+    }).catch(err => {
+        console.error(err);
+        document.getElementById('questionContainer').innerHTML = '<p style="color:red;">خطا در بارگذاری سوالات.</p>';
+    });
+}
+function renderQuestion() {
+    const q = questions[currentQuestion];
+    const container = document.getElementById('questionContainer');
+    if (!container) return;
+    const progress = ((currentQuestion + 1) / questions.length) * 100;
+    document.getElementById('progressBar').style.width = `${progress}%`;
+    let html = `<div class="question-card"><p style="color:hsl(var(--muted-foreground));margin-bottom:8px;">سوال ${currentQuestion + 1} از ${questions.length}</p><h2 class="question-title">${q.question}</h2>`;
+    if (q.type === 'multiple') {
+        html += '<div>';
+        q.options.forEach(opt => {
+            const sel = answers[q.id] === opt ? 'selected' : '';
+            const esc = opt.replace(/'/g, "\\'");
+            html += `<button class="option-button ${sel}" onclick="selectOption(${q.id}, '${esc}')">${opt}</button>`;
         });
-
-        // The main "Start Test" button on the homepage should now point to the user info page
-        document.querySelector('.home-button[onclick*="skills-assessment"]').setAttribute('onclick', "navigateTo('user-info')");
-
-
-        function startTest() {
-            currentQuestion = 0;
-            // Note: We no longer reset 'answers' here, so we keep the user info
-            fetch('/api/questions/')
-                .then(response => response.json())
-                .then(data => {
-                    questions = data;
-                    if (questions && questions.length > 0) {
-                        renderQuestion();
-                    } else {
-                        document.getElementById('questionContainer').innerHTML = "<p>No questions are available.</p>";
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching questions:', error);
-                    document.getElementById('questionContainer').innerHTML = "<p>Could not load questions.</p>";
-                });
-        }
-
-        function renderQuestion() {
-            const q = questions[currentQuestion];
-            const container = document.getElementById('questionContainer');
-            if (!container) return;
-
-            const progress = ((currentQuestion + 1) / questions.length) * 100;
-            document.getElementById('progressBar').style.width = progress + '%';
-
-            let html = `<div class="question-card">
-                <p style="color: hsl(var(--muted-foreground)); margin-bottom: 8px;">سوال ${currentQuestion + 1} از ${questions.length}</p>
-                <h2 class="question-title">${q.question}</h2>`;
-
-            if (q.type === 'multiple') {
-                html += '<div>';
-                q.options.forEach((opt) => {
-                    const selected = answers[q.id] === opt ? 'selected' : '';
-                    const escapedOpt = opt.replace(/'/g, "\\'");
-                    html += `<button class="option-button ${selected}" onclick="selectOption(${q.id}, '${escapedOpt}')">${opt}</button>`;
-                });
-                html += '</div>';
-            } else if (q.type === 'slider') {
-                const value = answers[q.id] || 5;
-                html += `<div class="slider-container">
-                    <input type="range" class="slider" min="${q.min}" max="${q.max}" value="${value}" oninput="updateSlider(${q.id}, this)">
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-weight: 600;">
-                        <span>${q.min}</span>
-                        <span id="sliderValue-${q.id}">${value}</span>
-                        <span>${q.max}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: hsl(var(--muted-foreground)); padding: 0 4px;">
-                        <span>کاملا مخالفم</span>
-                        <span>کاملا موافقم</span>
-                    </div>
-                </div>`;
-            } else if (q.type === 'text') {
-                const value = answers[q.id] || '';
-                html += `<input type="text" class="input-field" value="${value}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
-            }
-
-            html += '</div>';
-            container.innerHTML = html;
-
-            if (q.type === 'slider') {
-                const sliderElement = container.querySelector('.slider');
-                updateSliderVisuals(sliderElement);
-            }
-
-            document.getElementById('prevBtn').disabled = currentQuestion === 0;
-            document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'مشاهده نتایج' : 'بعدی';
-        }
-
-        function selectOption(id, option) { answers[id] = option; renderQuestion(); }
-        
-        function updateSlider(id, sliderElement) {
-            const value = parseInt(sliderElement.value);
-            answers[id] = value;
-            document.getElementById('sliderValue-' + id).textContent = value;
-            updateSliderVisuals(sliderElement);
-        }
-
-        function updateSliderVisuals(sliderElement) {
-            if (!sliderElement) return;
-            const min = parseInt(sliderElement.min);
-            const max = parseInt(sliderElement.max);
-            const value = parseInt(sliderElement.value);
-            const percentage = ((value - min) / (max - min)) * 100;
-            sliderElement.style.setProperty('--track-fill', `${percentage}%`);
-        }
-
-        function updateText(id, value) { answers[id] = value; }
-
-        function nextQuestion() {
-            if (currentQuestion < questions.length - 1) {
-                currentQuestion++;
-                renderQuestion();
-            } else {
-                submitAnswers();
-            }
-        }
-
-        function previousQuestion() {
-            if (currentQuestion > 0) {
-                currentQuestion--;
-                renderQuestion();
-            }
-        }
-        
-        function submitAnswers() {
-            fetch('/api/submit-answers/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(answers)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Submission successful:', data);
-                showResults();
-            })
-            .catch(error => {
-                console.error('Error submitting answers:', error);
-                alert('Could not save your results, but you can still view them.');
-                showResults();
-            });
-        }
-
-        function showResults() {
-            navigateTo('results');
-            const resultsContent = document.getElementById('resultsContent');
-            if (!resultsContent) return;
-
-            let resultsHtml = `<div class="results-card">
-                <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">خلاصه پاسخ‌های شما</h2>
-                <div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
-                    <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">نام شما:</p>
-                    <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary));">${answers.user_name || 'ثبت نشده'}</p>
-                </div>
-            `;
-
-            questions.forEach(q => {
-                const answer = answers[q.id];
-                const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
-                resultsHtml += `<div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
-                    <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p>
-                    <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">
-                        ${answerText}
-                    </p>
-                </div>`;
-            });
-
-            resultsHtml += `</div>`;
-            resultsContent.innerHTML = resultsHtml;
-        }
-
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+        html += '</div>';
+    } else if (q.type === 'slider') {
+        const val = answers[q.id] ?? 5;
+        html += `<div class="slider-container"><input type="range" class="slider" min="${q.min}" max="${q.max}" value="${val}" oninput="updateSlider(${q.id}, this)"><div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:600;"><span>${q.min}</span><span id="sliderValue-${q.id}">${val}</span><span>${q.max}</span></div><div style="display:flex;justify-content:space-between;font-size:.85rem;color:hsl(var(--muted-foreground));padding:0 4px;"><span>کاملا مخالفم</span><span>کاملا موافقم</span></div></div>`;
+    } else if (q.type === 'text') {
+        const val = answers[q.id] ?? '';
+        html += `<input type="text" class="input-field" value="${val}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+    if (q.type === 'slider') {
+        const slider = container.querySelector('.slider');
+        updateSliderFill(slider);
+    }
+    document.getElementById('prevBtn').disabled = currentQuestion === 0;
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'مشاهده نتایج' : 'بعدی';
+}
+function selectOption(id, opt) { answers[id] = opt; renderQuestion(); }
+function updateSlider(id, el) {
+    const val = parseInt(el.value, 10);
+    answers[id] = val;
+    document.getElementById(`sliderValue-${id}`).textContent = val;
+    updateSliderFill(el);
+}
+function updateSliderFill(el) {
+    if (!el) return;
+    const min = +el.min, max = +el.max, val = +el.value;
+    const pct = ((val - min) / (max - min)) * 100;
+    el.style.setProperty('--track-fill', `${pct}%`);
+}
+function updateText(id, val) { answers[id] = val; }
+function previousQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; renderQuestion(); }
+    else { submitAnswers(); }
+}
+document.addEventListener('DOMContentLoaded', () => {});
+document.querySelector('.home-button[onclick*="skills-assessment"]').setAttribute('onclick', "showPage('user-info')");
+function downloadResults() { alert('این قابلیت در حال توسعه است.'); }
+function shareResults() { alert('این قابلیت در حال توسعه است.'); }
+</script>
 </body>
 </html>
