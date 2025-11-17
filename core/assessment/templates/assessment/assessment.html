@@ -338,13 +338,39 @@
         button, input, textarea, select {
         font-family: inherit;
         }
+        /* Add this to your <style> block */
+        #profile-button {
+            background: hsl(var(--card));
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: auto;
+            z-index: 1001;
+            transition: transform 0.2s;
+        }
+        #profile-button:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
+    {% if user.is_authenticated %}
+        <div id="profile-button" onclick="showProfilePanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+    {% endif %}
     <!-- Main Content -->
     <div id="mainContent">
         <!-- Home Page -->
-        <div id="homePage" class="page-content">
+        <div id="homePage" class="page-content hidden">
             <div class="home-page">
                 <div class="home-container">
                     <div class="home-title">
@@ -365,22 +391,72 @@
             </div>
         </div>
 
+        <div id="otpPage" class="page-content hidden">
+            <div class="test-container" style="padding-top: 80px;">
+                <div class="question-card">
+                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">کد تایید را وارد کنید</h2>
+                    <p style="text-align: center; color: hsl(var(--muted-foreground)); margin-bottom: 24px;">
+                        یک کد ۶ رقمی به شماره شما ارسال شد.
+                    </p>
+                    <div style="margin-bottom: 32px;">
+                        <label for="otpCode" style="display: block; margin-bottom: 8px;">کد تایید</label>
+                        <input type="text" id="otpCode" class="input-field" placeholder="کد ۶ رقمی..." inputmode="numeric" maxlength="6">
+                    </div>
+                    <button id="verifyOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="verifyOTP()">تایید و ورود</button>
+                </div>
+            </div>
+        </div>
+
+                <!-- NEW: The Profile Panel Page -->
+        <div id="profilePage" class="page-content hidden">
+        <div class="test-container" style="padding-top: 80px;">
+            <div class="question-card" id="profileForm">
+                <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">پروفایل شما</h2>
+                
+                <div style="margin-bottom: 16px;">
+                    <label>شماره تماس (غیرقابل تغییر)</label>
+                    <input type="text" id="profilePhone" class="input-field" readonly>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="profileFullName">نام و نام خانوادگی</label>
+                    <input type="text" id="profileFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="profileAge">سن</label>
+                    <input type="number" id="profileAge" class="input-field" placeholder="سن خود را وارد کنید...">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="profileAddress">آدرس (شهر)</label>
+                    <input type="text" id="profileAddress" class="input-field" placeholder="شهر محل سکونت...">
+                </div>
+                <div style="margin-bottom: 32px;">
+                    <label for="profileAbout">درباره من</label>
+                    <textarea id="profileAbout" class="input-field" rows="4" placeholder="چند جمله درباره خودتان..."></textarea>
+                </div>
+
+                <div class="nav-buttons" style="justify-content: space-between;">
+                    <button class="btn btn-secondary" onclick="logout()">خروج از حساب</button>
+
+                    <button id="saveProfileBtn" class="btn btn-primary" onclick="saveProfile()">ذخیره تغییرات</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
         <div id="userInfoPage" class="page-content hidden">
             <div class="test-container" style="padding-top: 80px;">
                 <div class="question-card">
-                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">اطلاعات شما</h2>
-
-                        {% csrf_token %}
-
+                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">ثبت‌ نام</h2>
+                    {% csrf_token %} <!-- The CSRF token is crucial here -->
                     <div style="margin-bottom: 16px;">
-                        <label for="userName" style="display: block; margin-bottom: 8px;">نام و نام خانوادگی</label>
-                        <input type="text" id="userName" class="input-field" placeholder="نام خود را وارد کنید...">
+                        <label for="regFullName">نام و نام خانوادگی</label>
+                        <input type="text" id="regFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
                     </div>
                     <div style="margin-bottom: 32px;">
-                        <label for="userPhone" style="display: block; margin-bottom: 8px;">شماره تماس</label>
-                        <input type="tel" id="userPhone" class="input-field" placeholder="شماره تماس خود را وارد کنید...">
+                        <label for="userPhone">شماره تماس</label>
+                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789">
                     </div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="startAssessment()">ادامه و شروع تست</button>
+                    <button id="requestOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="requestOTP()">دریافت کد تایید</button>
                 </div>
             </div>
         </div>
@@ -403,6 +479,21 @@
             </div>
         </div>
 
+        <!-- review page-->
+        <div id="reviewPage" class="page-content hidden">
+            <div class="results-container">
+                <div class="results-header">
+                    <h1 class="results-title">مرور پاسخ‌ها</h1>
+                    <p>لطفا پاسخ‌های خود را بررسی کنید. در صورت تایید، تحلیل هوشمند برای شما ارسال خواهد شد.</p>
+                </div>
+                <div id="reviewContent" class="results-card"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="editAnswers()">ویرایش پاسخ‌ها</button>
+                    <button class="btn btn-primary" onclick="submitAnswers()">تایید و ارسال نهایی</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Results Page -->
         <div id="resultsPage" class="page-content hidden">
             <div class="results-container">
@@ -421,7 +512,7 @@
 
     </div>
 
-    <script>
+<script>
 /* -------------------------------------------------
    STATE
    ------------------------------------------------- */
@@ -430,92 +521,267 @@ let answers       = {};
 let questions     = [];
 
 /* -------------------------------------------------
-   PAGE NAVIGATION (This was missing / causing errors)
+   PAGE NAVIGATION (Corrected and Unified)
    ------------------------------------------------- */
-function showPage(page) {
+function showPage(page, updateHistory = true) {
     document.querySelectorAll('.page-content')
             .forEach(p => p.classList.add('hidden'));
+
     const id = {
-        home: 'homePage', 'user-info': 'userInfoPage',
-        'skills-assessment': 'skillsAssessmentPage', results: 'resultsPage'
+        home:            'homePage',
+        'user-info':     'userInfoPage',
+        'skills-assessment': 'skillsAssessmentPage',
+        results:         'resultsPage',
+        otp:             'otpPage',
+        profile:         'profilePage',
+        review:          'reviewPage' // <-- THIS IS THE MISSING LINE
     }[page];
+
     const el = document.getElementById(id);
-    if (el) el.classList.remove('hidden');
-    else console.error('Page not found:', page);
-}
-// We need navigateTo for the buttons on the results page
-function navigateTo(page) {
-    // For now, a simple redirect is the most robust solution
-    if (page === 'home') {
-        window.location.href = '/';
+    if (el) {
+        el.classList.remove('hidden');
+    } else {
+        console.error('Page not found:', page);
+        return;
+    }
+    
+    updateProfileButtonVisibility(page);
+
+    if (updateHistory) {
+        history.pushState({ page: page }, '', `#${page}`);
     }
 }
 
+// THE FIX: This function now correctly handles SPA navigation for all buttons.
+function navigateTo(page) {
+    showPage(page);
+}
+
+window.onpopstate = function(event) {
+    if (event.state && event.state.page) {
+        showPage(event.state.page, false);
+    } else {
+        showPage('{{ initial_page|default:"user-info" }}', false);
+    }
+};
+
 /* -------------------------------------------------
-   FORM SUBMIT (API Call)
+   OTP / LOGIN FLOW
    ------------------------------------------------- */
-function submitAnswers() {
-    showPage('results');
-    const container = document.getElementById('resultsContent');
-    container.innerHTML = '<p style="text-align:center;font-size:1.2rem;">در حال تحلیل پاسخ‌ها... لطفاً صبر کنید.</p>';
+function requestOTP() {
+    const phone = document.getElementById('userPhone').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
+    if (!phone || !fullName) {
+        alert('لطفا تمام فیلدها را پر کنید.');
+        return;
+    }
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/request-otp/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify({ phone_number: phone })
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') showPage('otp');
+        else alert('خطا: ' + data.message);
+    });
+}
 
-    // 1. Build the rich list
-    const richAnswers = questions.map(q => ({
-        id: q.id,
-        question: q.question,
-        answer: answers[q.id] ?? null
-    }));
+function verifyOTP() {
+    const phone = document.getElementById('userPhone').value.trim();
+    const code = document.getElementById('otpCode').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
 
-    const payload = {
-        user_name: answers.user_name || "",
-        user_phone: answers.user_phone || "",
-        answers: richAnswers
-    };
-
-    // 2. CSRF token (must be present in the page)
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-    if (!csrfToken) {
-        container.innerHTML = '<p style="color:red;text-align:center;">خطای امنیتی: توکن یافت نشد.</p>';
+    if (!code || code.length !== 6) {
+        alert('لطفا کد ۶ رقمی را به درستی وارد کنید.');
         return;
     }
 
-    // 3. POST
-    fetch('/api/get-ai-analysis/', {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch('/api/verify-otp/', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify({
+            phone_number: phone,
+            code: code,
+            full_name: fullName
+        })
     })
-    .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-    })
+    .then(r => r.json())
     .then(data => {
         if (data.status === 'success') {
-            showResults(payload, data.analysis);
+            // THE FIX: Login was successful. Force a full page reload to the homepage.
+            // This ensures the server sends back the correct HTML for a logged-in user.
+            window.location.href = '/'; 
         } else {
-            throw new Error(data.message || "Unknown error");
+            alert('خطا: ' + data.message);
         }
-    })
-    .catch(err => {
-        console.error(err);
-        container.innerHTML = `<p style="color:red;text-align:center;">
-            خطا در دریافت تحلیل: ${err.message}. می‌توانید دوباره امتحان کنید.
-        </p>`;
     });
 }
 
 /* -------------------------------------------------
-   SHOW RESULTS (Renders the AI Analysis)
+   PROFILE PANEL
    ------------------------------------------------- */
-function showResults(userData, analysis) {
+function showProfilePanel() {
+    const profilePage = document.getElementById('profilePage');
+    if (!profilePage) { console.error('Profile page element not found!'); return; }
+    if (!profilePage.classList.contains('hidden')) {
+        showPage('home'); // If it's open, close it
+        return;
+    }
+    fetch('/api/profile/').then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            const profile = data.profile;
+            document.getElementById('profilePhone').value = profile.phone_number;
+            document.getElementById('profileFullName').value = profile.full_name;
+            document.getElementById('profileAge').value = profile.age;
+            document.getElementById('profileAddress').value = profile.address;
+            document.getElementById('profileAbout').value = profile.about_me;
+            
+            const saveBtn = document.getElementById('saveProfileBtn');
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.5';
+            saveBtn.style.cursor = 'not-allowed';
+
+            const form = document.getElementById('profileForm');
+            const enableButton = () => {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
+                form.removeEventListener('input', enableButton);
+            };
+            form.addEventListener('input', enableButton);
+            linkEnterToNext('profileFullName', 'profileAge');
+            linkEnterToNext('profileAge', 'profileAddress');
+            linkEnterToNext('profileAddress', 'profileAbout');
+            linkEnterToNext('profileAbout', 'saveProfileBtn');
+
+            showPage('profile');
+        } else { alert('خطا در بارگذاری پروفایل.'); }
+    });
+}
+
+function saveProfile() {
+    const profileData = {
+        full_name: document.getElementById('profileFullName').value,
+        age: document.getElementById('profileAge').value,
+        address: document.getElementById('profileAddress').value,
+        about_me: document.getElementById('profileAbout').value,
+    };
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/profile/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify(profileData)
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            alert('پروفایل شما با موفقیت ذخیره شد.');
+            showPage('home');
+        } else { alert('خطا در ذخیره پروفایل.'); }
+    });
+}
+function logout() {
+    // THE FIX: Add the new, more informative confirmation message.
+    const confirmationMessage = "آیا برای خروج از حساب کاربری خود اطمینان دارید؟\n\nتوجه: برای ورود مجدد به این حساب کاربری باید همین نام و نام خانوادگی و شماره موبایل رو وارد کنید و کد تایید بگیرید. ";
+    if (confirm(confirmationMessage)) {
+        window.location.href = '/logout/';
+    }
+}
+function updateProfileButtonVisibility(page) {
+    const profileButton = document.getElementById('profile-button');
+    if (!profileButton) return;
+
+    // THE FIX: Show the button on the homepage AND the profile page.
+    if (page === 'home' || page === 'profile') {
+        profileButton.style.display = 'flex';
+    } else {
+        profileButton.style.display = 'none';
+    }
+}
+/* -------------------------------------------------
+   REVIEW & FINAL SUBMIT
+   ------------------------------------------------- */
+function showReviewPage() {
+    showPage('review');
+    const container = document.getElementById('reviewContent');
+    if (!container) return;
+
+    let html = '';
+    questions.forEach(q => {
+        const answer = answers[q.id];
+        const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
+
+        html += `
+            <div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
+                <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p>
+                <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">
+                    ${answerText}
+                </p>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function editAnswers() {
+    // This simply takes the user back to the test page, which will
+    // automatically be on the last question.
+    showPage('skills-assessment');
+}
+/* -------------------------------------------------
+   ASSESSMENT & AI LOGIC
+   ------------------------------------------------- */
+function submitAnswers() {
+    showPage('results');
+    const resultsContainer = document.getElementById('resultsContent');
+    resultsContainer.innerHTML = '<p style="text-align: center; font-size: 1.2rem;">در حال تحلیل پاسخ‌ها... لطفاً چند لحظه صبر کنید.</p>';
+    
+    // THE FIX: The user is logged in, so we don't need to send user_info anymore.
+    const submissionData = {
+        responses: []
+    };
+    questions.forEach(q => {
+        const userAnswer = answers[q.id];
+        if (userAnswer !== undefined) {
+            submissionData.responses.push({
+                question_id: q.id,
+                question_text: q.question,
+                answer: userAnswer
+            });
+        }
+    });
+
+    const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfTokenInput) {
+        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">خطای امنیتی: توکن یافت نشد. لطفاً صفحه را رفرش کنید.</p>';
+        return;
+    }
+
+    fetch('/api/get-ai-analysis/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenInput.value },
+        body: JSON.stringify(submissionData)
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            showResults(data.analysis);
+        } else {
+            resultsContainer.innerHTML = `<p style="text-align: center; color: red;">خطا در تحلیل پاسخ‌ها: ${data.message}</p>`;
+        }
+    }).catch(err => {
+        console.error(err);
+        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">یک خطای غیرمنتظره در شبکه رخ داد. لطفاً دوباره تلاش کنید.</p>';
+    });
+}
+
+function showResults(analysis) {
     const container = document.getElementById('resultsContent');
     if (!container) return;
-    const userName = userData.user_name || 'کاربر مهمان';
+    
+    // THE FIX: The user's name is now part of the Django template context, not the JS data.
+    const userName = "{{ user.full_name|default:'کاربر مهمان' }}";
     document.querySelector('#resultsPage .results-header p').textContent = 
         `${userName} عزیز، این تحلیل اختصاصی بر اساس پاسخ‌های شما آماده شده است.`;
+    
     let html = `
         <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">تحلیل کلی</h2><p style="line-height: 1.8;">${analysis.analysis}</p></div>
         <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">مسیرهای شغلی پیشنهادی</h2>
@@ -529,19 +795,6 @@ function showResults(userData, analysis) {
     container.innerHTML = html;
 }
 
-/* -------------------------------------------------
-   The rest of your script (startAssessment, loadQuestions, renderQuestion, etc.)
-   is correct and does not need to change. Paste it here.
-   ------------------------------------------------- */
-function startAssessment() {
-    const name = document.getElementById('userName').value.trim();
-    const phone = document.getElementById('userPhone').value.trim();
-    if (!name || !phone) { alert('لطفا نام و شماره تماس خود را وارد کنید.'); return; }
-    answers.user_name  = name;
-    answers.user_phone = phone;
-    showPage('skills-assessment');
-    loadQuestions();
-}
 function loadQuestions() {
     currentQuestion = 0;
     fetch('/api/questions/').then(r => r.json()).then(data => {
@@ -553,6 +806,8 @@ function loadQuestions() {
         document.getElementById('questionContainer').innerHTML = '<p style="color:red;">خطا در بارگذاری سوالات.</p>';
     });
 }
+
+// In your <script> block
 function renderQuestion() {
     const q = questions[currentQuestion];
     const container = document.getElementById('questionContainer');
@@ -573,7 +828,8 @@ function renderQuestion() {
         html += `<div class="slider-container"><input type="range" class="slider" min="${q.min}" max="${q.max}" value="${val}" oninput="updateSlider(${q.id}, this)"><div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:600;"><span>${q.min}</span><span id="sliderValue-${q.id}">${val}</span><span>${q.max}</span></div><div style="display:flex;justify-content:space-between;font-size:.85rem;color:hsl(var(--muted-foreground));padding:0 4px;"><span>کاملا مخالفم</span><span>کاملا موافقم</span></div></div>`;
     } else if (q.type === 'text') {
         const val = answers[q.id] ?? '';
-        html += `<input type="text" class="input-field" value="${val}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
+        // THE FIX: Add oninput back to keep the 'answers' object always up-to-date.
+        html += `<input type="text" id="textAnswerInput" class="input-field" value="${val}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
     }
     html += '</div>';
     container.innerHTML = html;
@@ -581,9 +837,8 @@ function renderQuestion() {
         const slider = container.querySelector('.slider');
         updateSliderFill(slider);
     }
-    document.getElementById('prevBtn').disabled = currentQuestion === 0;
-    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'مشاهده نتایج' : 'بعدی';
 }
+
 function selectOption(id, opt) { answers[id] = opt; renderQuestion(); }
 function updateSlider(id, el) {
     const val = parseInt(el.value, 10);
@@ -597,14 +852,97 @@ function updateSliderFill(el) {
     const pct = ((val - min) / (max - min)) * 100;
     el.style.setProperty('--track-fill', `${pct}%`);
 }
-function updateText(id, val) { answers[id] = val; }
+function updateText(id, val) { 
+    answers[id] = val.trim(); 
+}
 function previousQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
 function nextQuestion() {
-    if (currentQuestion < questions.length - 1) { currentQuestion++; renderQuestion(); }
-    else { submitAnswers(); }
+    const currentQ = questions[currentQuestion];
+
+    // THE FIX: This simple check now works for ALL question types because 'answers' is always up-to-date.
+    const currentAnswer = answers[currentQ.id];
+    if (currentAnswer === undefined || currentAnswer === '') {
+        alert("لطفا قبل از ادامه به این سوال پاسخ دهید.");
+        return; // This will now correctly stop the function.
+    }
+
+    // The rest of the function is correct
+    if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+    } else {
+        showReviewPage();
+    }
 }
-document.addEventListener('DOMContentLoaded', () => {});
-document.querySelector('.home-button[onclick*="skills-assessment"]').setAttribute('onclick', "showPage('user-info')");
+/* -------------------------------------------------
+   GLOBAL EVENT LISTENERS (The Final "Enter Key" Fix)
+   ------------------------------------------------- */
+function linkEnterToNext(currentInputId, nextElementId) {
+    const currentInput = document.getElementById(currentInputId);
+    const nextElement = document.getElementById(nextElementId);
+
+    if (!currentInput || !nextElement) return;
+
+    currentInput.addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            // If the next element is an input, focus it. If it's a button, click it.
+            if (nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA') {
+                nextElement.focus();
+            } else {
+                nextElement.click();
+            }
+        }
+    });
+}
+
+/* -------------------------------------------------
+   INITIALISE & BINDINGS
+   ------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+    const initialPage = '{{ initial_page|default:"user-info" }}';
+    const isAuthenticated = {{ is_authenticated|yesno:"true,false" }};
+    
+    showPage(initialPage, false);
+    history.replaceState({ page: initialPage }, '', `#${initialPage}`);
+
+    if (isAuthenticated) {
+        const startTestButton = document.querySelector('.home-button');
+        if (startTestButton) {
+            startTestButton.setAttribute('onclick', "showPage('skills-assessment'); loadQuestions();");
+        }
+    }
+});
+{% comment %} document.addEventListener('keyup', function(event) {
+    if (event.key !== 'Enter') return; // Do nothing if it's not the Enter key
+
+    // Find which page is currently visible
+    const visiblePage = document.querySelector('.page-content:not(.hidden)');
+    if (!visiblePage) return;
+
+    // Based on the visible page, decide which button to "click"
+    switch (visiblePage.id) {
+        case 'userInfoPage':
+            event.preventDefault();
+            document.getElementById('requestOtpBtn').click();
+            break;
+        case 'otpPage':
+            event.preventDefault();
+            document.getElementById('verifyOtpBtn').click();
+            break;
+        case 'skillsAssessmentPage':
+            event.preventDefault();
+            document.getElementById('nextBtn').click();
+            break;
+        case 'profilePage':
+            event.preventDefault();
+            const saveBtn = document.getElementById('saveProfileBtn');
+            if (saveBtn && !saveBtn.disabled) {
+                saveBtn.click();
+            }
+            break;
+    }
+}); {% endcomment %}
 function downloadResults() { alert('این قابلیت در حال توسعه است.'); }
 function shareResults() { alert('این قابلیت در حال توسعه است.'); }
 </script>

@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'assessment'
+    'assessment',
+    'account',
 ]
 
 MIDDLEWARE = [
@@ -124,6 +125,11 @@ USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL = config('AUTH_USER_MODEL', default='account.CustomUser')
+
+SESSION_COOKIE_AGE = 2592000
+
+SESSION_EXPIRES_AT_BROWSER_CLOSE = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

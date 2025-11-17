@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.serializers.json import DjangoJSONEncoder
+from django.conf import settings
 
 
 # NEW: Custom encoder to preserve Persian characters
@@ -45,13 +46,15 @@ class Choice(models.Model):
         return self.choice_text
     
 class AssessmentResult(models.Model):
-    user_name   = models.CharField(max_length=100, blank=True)
-    user_phone  = models.CharField(max_length=20,  blank=True)
-    # NEW: list of dicts → {id, question, answer}
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assessments")
     answers     = models.JSONField(default=list)
     # NEW: AI analysis (JSON from your LLM)
     ai_analysis = models.JSONField(null=True, blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user_name or 'بدون نام'} – {self.created_at:%Y-%m-%d %H:%M}"
+        user_name = self.answers.get('user_info', {}).get('name', 'Anonymous')
+        
+        if self.user:
+            return f"Result for {self.user.phone_number} ({self.user.full_name}) at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"Result for {self.user.full_name} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"

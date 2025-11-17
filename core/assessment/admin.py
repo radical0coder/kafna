@@ -21,7 +21,7 @@ class QuestionAdmin(admin.ModelAdmin):
 class AssessmentResultAdmin(admin.ModelAdmin):
     # THE FIX: We use the object's __str__ method for the display, which is clean.
     list_display = ('__str__', 'created_at', 'has_ai_analysis')
-    readonly_fields = ('pretty_answers', 'pretty_ai_analysis', 'created_at')
+    readonly_fields = ('pretty_answers', 'pretty_ai_analysis', 'created_at', 'user' )
     exclude = ('answers', 'ai_analysis')
 
     def pretty_answers(self, instance):
