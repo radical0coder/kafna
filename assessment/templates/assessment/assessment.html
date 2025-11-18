@@ -443,25 +443,23 @@
         </div>
     </div>
 
+        <!-- Replace the entire userInfoPage div with this corrected version -->
         <div id="userInfoPage" class="page-content hidden">
             <div class="test-container" style="padding-top: 80px;">
+                
+                <!-- 1. The explanation text is now OUTSIDE the form card -->
+                <div style="text-align: center; margin-bottom: 24px; padding: 20px; background: hsl(var(--secondary)); border-radius: 12px; line-height: 1.8;">
+                    <h2 style="color: hsl(var(--primary-glow)); margin-bottom: 16px;">تست استعدادیابی شغلی کافنا</h2>
+                    <p style="font-size: 1.1rem; color: #333;">
+                        با وارد کردن نام و شماره موبایل، کد تأیید برای شما ارسال می‌شود تا بتوانید تست استعدادیابی شغلی را شروع کنید.<br>
+                        پس از تکمیل تست، تحلیل هوش مصنوعی مسیرهای شغلی مناسب شما را نمایش می‌دهد.
+                    </p>
+                </div>
+
+                <!-- 2. The form card is now a single, clean element -->
                 <div class="question-card">
-        <!-- ==== متن توضیحی که sms.ir می‌خواهد ==== -->
-        <div style="text-align: center; margin-bottom: 32px; padding: 20px; background: #f8f9fa; border-radius: 12px; line-height: 1.8;">
-            <h2 style="color: #263b80; margin-bottom: 16px;">تست استعدادیابی شغلی کافنا</h2>
-            <p style="font-size: 1.1rem; color: #333;">
-                با وارد کردن نام و شماره موبایل، کد تأیید برای شما ارسال می‌شود تا بتوانید تست استعدادیابی شغلی را شروع کنید.<br>
-                پس از تکمیل تست، تحلیل هوش مصنوعی مسیرهای شغلی مناسب شما را نمایش می‌دهد.
-            </p>
-            <p style="font-size: 0.95rem; color: #666; margin-top: 12px;">
-                شماره موبایل شما فقط برای ارسال کد تأیید استفاده می‌شود و نزد ما محفوظ است.
-            </p>
-        </div>
-        <!-- ==== پایان متن توضیحی ==== -->
-                <div class="question-card">
-                    <h2
                     <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">ثبت‌ نام</h2>
-                    {% csrf_token %} <!-- The CSRF token is crucial here -->
+                    {% csrf_token %}
                     <div style="margin-bottom: 16px;">
                         <label for="regFullName">نام و نام خانوادگی</label>
                         <input type="text" id="regFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
@@ -472,8 +470,9 @@
                     </div>
                     <button id="requestOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="requestOTP()">دریافت کد تایید</button>
                 </div>
-            </div>
-        </div>
+
+    </div>
+</div>
 
         <!-- Skills Assessment Page -->
         <div id="skillsAssessmentPage" class="page-content hidden">
