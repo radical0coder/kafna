@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import render
 import json
 import random
@@ -24,13 +25,11 @@ def request_otp_view(request):
         if not phone_number:
             return JsonResponse({'status': 'error', 'message': 'Phone number is required.'}, status=400)
 
-        # Generate a random 6-digit code
+        if not re.match(r'^09\d{9}$', phone_number):
+            return JsonResponse({'status': 'error', 'message': 'Invalid phone number format.'}, status=400)
+        
         code = str(random.randint(100000, 999999))
-        
-        # Save the OTP to the database
         OTP.objects.create(phone_number=phone_number, code=code)
-        
-        # "Send" the SMS (it will print to your console)
         send_otp_sms(phone_number, code)
 
         return JsonResponse({'status': 'success', 'message': 'OTP sent successfully.'})

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loveble - تست استعدادیابی شغلی هوشمند | کشف مسیر شغلی ایده‌آل</title>
+    <title>کافنا - تست استعدادیابی هوشمند</title>
     <meta name="description" content="با تست استعدادیابی شغلی هوش مصنوعی Loveble، مسیر حرفه‌ای شخصی‌سازی‌شده و برنامه عملیاتی ۱۸۰ روزه دریافت کنید. مورد اعتماد بیش از ۱۸,۰۰۰ کاربر.">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
     
@@ -454,7 +454,7 @@
                     </div>
                     <div style="margin-bottom: 32px;">
                         <label for="userPhone">شماره تماس</label>
-                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789">
+                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789" maxlength="11" pattern="09[0-9]{9}">
                     </div>
                     <button id="requestOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="requestOTP()">دریافت کد تایید</button>
                 </div>
@@ -573,6 +573,11 @@ function requestOTP() {
     const fullName = document.getElementById('regFullName').value.trim();
     if (!phone || !fullName) {
         alert('لطفا تمام فیلدها را پر کنید.');
+        return;
+    }
+    const phonePattern = /^09\d{9}$/;
+    if (!phonePattern.test(phone)) {
+        alert("لطفا یک شماره موبایل معتبر ایرانی وارد کنید (مثال: 09123456789).");
         return;
     }
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
