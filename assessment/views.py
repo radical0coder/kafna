@@ -1,83 +1,101 @@
+# assessment/views.py
 import json
+from django.http import JsonResponse, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.contrib.auth.decorators import login_required
+from .models import Test, AssessmentResult, Job
 from .ai import get_ai_analysis
-from django.http import JsonResponse
-from django.shortcuts import render
-from .models import Question, AssessmentResult
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from django.views.decorators.http import require_http_methods
 
-# This view serves the main HTML page (the "shell")
 @ensure_csrf_cookie
 def assessment_view(request):
     """
-    Renders the main SPA. The logic is now simple again.
+    Renders the main SPA.
+    Always sends logged-in users to the Home page, ready to start.
     """
-    context = {}
-    context['is_authenticated'] = request.user.is_authenticated
-
+    context = {'is_authenticated': request.user.is_authenticated}
+    
     if request.user.is_authenticated:
-        # A logged-in user always starts at the homepage.
+        # 1. Always start at Home
         context['initial_page'] = 'home'
+        
+        # 2. Find the Primary Assessment ID so the "Start" button knows what to load
+        primary_test = Test.objects.filter(is_primary_assessment=True).first()
+        if primary_test:
+            context['start_test_id'] = primary_test.id
     else:
-        # An anonymous user always starts at the login page.
+        # Guest users start at Login
         context['initial_page'] = 'user-info'
 
     return render(request, 'assessment/assessment.html', context)
 
-# This is our API endpoint
-def get_questions_api(request):
-    """
-    API endpoint that returns all assessment questions as JSON.
-    """
-    # Use order_by to be certain they are in the correct sequence
-    questions_queryset = Question.objects.order_by('order').prefetch_related('choices').all()
-    
-    questions_list = []
-    for q in questions_queryset:
-        question_data = {
-            'id': q.id,
-            'type': q.question_type,
-            'question': q.question_text,
-        }
-        if q.question_type == 'multiple':
-            # Ensure choices are ordered if you add an order field to them later
-            question_data['options'] = [choice.choice_text for choice in q.choices.all()]
-        elif q.question_type == 'slider':
-            question_data['min'] = 1
-            question_data['max'] = 5
-        
-        questions_list.append(question_data)
-        
-    return JsonResponse(questions_list, safe=False)
+@login_required
+def get_test_questions_api(request, test_id):
+    """API to get the questions for a specific test."""
+    test = get_object_or_404(Test, pk=test_id)
+    return JsonResponse(test.questions, safe=False)
 
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def get_ai_analysis_view(request):
-    """
-    This is now our SINGLE endpoint. It receives the answers,
-    saves them, gets an AI analysis, and returns the analysis.
-    """
+@login_required
+def get_ai_analysis_view(request, test_id):
+    """API to submit answers and get analysis."""
+    test = get_object_or_404(Test, pk=test_id)
     if request.method == 'POST':
-        if not request.user.is_authenticated:
-            return JsonResponse({'status': 'error', 'message': 'User not authenticated.'}, status=403)
         try:
             answers_data = json.loads(request.body)
             
-            # --- Call the AI service ---
-            ai_analysis = get_ai_analysis(answers_data)
+            # 1. Get analysis from AI
+            ai_analysis = get_ai_analysis(answers_data, test.system_prompt)
             
-            # --- Save the complete result ---
+            # 2. THE NEW LOGIC: Match Jobs to Tests
+            # We iterate through the recommended jobs and check if we have a test for them.
+            if 'recommended_jobs' in ai_analysis:
+                for job_item in ai_analysis['recommended_jobs']:
+                    job_name = job_item.get('job')
+                    # Look for a test linked to a Job with this exact name
+                    related_test = Test.objects.filter(related_job__name=job_name).first()
+                    if related_test:
+                        # If found, attach the test ID to the JSON response
+                        job_item['test_id'] = related_test.id
+
+            # 3. Save the result (now including the test_ids in the analysis JSON)
             AssessmentResult.objects.create(
                 user=request.user,
+                test=test,
                 answers=answers_data,
                 ai_analysis=ai_analysis
             )
             
-            # --- Return the analysis to the frontend ---
             return JsonResponse({'status': 'success', 'analysis': ai_analysis})
-        
         except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=405)
+
+@login_required
+def dashboard_api_view(request):
+    """API to get the data for the user's dashboard."""
+    # Find the latest primary assessment result
+    primary_result = AssessmentResult.objects.filter(user=request.user, test__is_primary_assessment=True).order_by('-created_at').first()
     
-    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed.'}, status=405)
+    recommended_tests = []
+    if primary_result and primary_result.ai_analysis:
+        recommended_job_names = [job['job'] for job in primary_result.ai_analysis.get('recommended_jobs', [])]
+        # Find tests related to the recommended jobs
+        recommended_tests = list(Test.objects.filter(related_job__name__in=recommended_job_names).values('id', 'name', 'description'))
+
+    # Get all other non-primary tests
+    other_tests = list(Test.objects.filter(is_primary_assessment=False).exclude(id__in=[t['id'] for t in recommended_tests]).values('id', 'name', 'description'))
+
+    data = {
+        'recommended_tests': recommended_tests,
+        'other_tests': other_tests,
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def get_tests_list_api(request):
+    """Returns a list of all non-primary (Level Assessment) tests."""
+    # We filter for tests that are NOT the primary assessment
+    tests = Test.objects.filter(is_primary_assessment=False).values('id', 'name', 'description')
+    return JsonResponse({'status': 'success', 'tests': list(tests)})

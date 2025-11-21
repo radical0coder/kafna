@@ -359,6 +359,26 @@
         #profile-button:hover {
             transform: scale(1.1);
         }
+        .spinner {
+            border: 4px solid hsla(var(--primary), 0.1);
+            border-left-color: hsl(var(--primary));
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+            color: hsl(var(--foreground));
+        }
     </style>
 </head>
 <body>
@@ -378,13 +398,13 @@
                         <p>کشف مسیر شغلی ایده‌آل با تست استعدادیابی هوشمند</p>
                     </div>
                     <div class="home-buttons">
-                        <button class="home-button" onclick="navigateTo('skills-assessment')">
+                        <button class="home-button" id="startPrimaryBtn" onclick="showPage('user-info')">
                             <h2>شروع تست استعدادیابی</h2>
                             <p>در کمتر از ۱۰ دقیقه، مسیر شغلی خود را کشف کنید</p>
                         </button>
-                        <button class="home-button secondary" onclick="alert('این بخش در حال توسعه است')">
-                            <h2>در حال توسعه</h2>
-                            <p>به زودی راه‌اندازی می‌شود</p>
+                        <button class="home-button secondary" onclick="loadTestsMenu()">
+                            <h2>آزمون های سطح سنجی</h2>
+                            <p>سنجش سطح مهارت در حوزه های مختلف</p>
                         </button>
                     </div>
                 </div>
@@ -518,6 +538,7 @@
                     <button class="btn btn-secondary" onclick="navigateTo('home')">بازگشت به خانه</button>
                     <button class="btn btn-primary" onclick="downloadResults()">دانلود نتایج</button>
                     <button class="btn btn-primary" onclick="shareResults()">اشتراک‌گذاری</button>
+                    <button class="btn btn-primary" onclick="loadTestsMenu()">آزمون‌های تخصصی</button>
                 </div>
             </div>
         </div>
@@ -530,6 +551,24 @@
             <div class="question-card">
                 <!-- ADD THIS CONTENT -->
                 <p>کافنا یک پلتفرم هوشمند استعدادیابی شغلی است که به افراد کمک می‌کند تا مسیر حرفه‌ای ایده‌آل خود را کشف کنند. ما با استفاده از تحلیل‌های پیشرفته، به کاربران کمک می‌کنیم تا نقاط قوت خود را بشناسند و یک برنامه عملی برای رسیدن به اهداف شغلی خود تدوین کنند.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="testsMenuPage" class="page-content hidden">
+        <div class="results-container">
+            <div class="results-header">
+                <h1 class="results-title">آزمون‌های تخصصی</h1>
+                <p>برای سنجش دقیق‌تر، یکی از آزمون‌های زیر را انتخاب کنید.</p>
+            </div>
+            
+            <!-- This grid will be filled by JavaScript -->
+            <div id="testsGrid" style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <!-- Tests will appear here -->
+            </div>
+
+            <div class="action-buttons" style="margin-top: 32px;">
+                <button class="btn btn-secondary" onclick="showPage('home')">بازگشت</button>
             </div>
         </div>
     </div>
@@ -551,34 +590,26 @@
 /* -------------------------------------------------
    STATE
    ------------------------------------------------- */
-let currentQuestion = 0;
+let currentQuestion = null;
 let answers       = {};
 let questions     = [];
+// NEW: Track the ID of the test currently being taken
+let currentTestId = null; 
 
 /* -------------------------------------------------
-   PAGE NAVIGATION (Corrected and Unified)
+   PAGE NAVIGATION
    ------------------------------------------------- */
 function showPage(page, updateHistory = true) {
-    document.querySelectorAll('.page-content')
-            .forEach(p => p.classList.add('hidden'));
-
+    document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
     const id = {
-        home:            'homePage',
-        'user-info':     'userInfoPage',
+        home: 'homePage', 'user-info': 'userInfoPage',
         'skills-assessment': 'skillsAssessmentPage',
-        results:         'resultsPage',
-        otp:             'otpPage',
-        profile:         'profilePage',
-        review:          'reviewPage' // <-- THIS IS THE MISSING LINE
+        results: 'resultsPage', otp: 'otpPage', profile: 'profilePage', review: 'reviewPage',
+        'tests-menu': 'testsMenuPage'
     }[page];
-
     const el = document.getElementById(id);
-    if (el) {
-        el.classList.remove('hidden');
-    } else {
-        console.error('Page not found:', page);
-        return;
-    }
+    if (el) el.classList.remove('hidden');
+    else { console.error('Page not found:', page); return; }
     
     updateProfileButtonVisibility(page);
 
@@ -587,10 +618,7 @@ function showPage(page, updateHistory = true) {
     }
 }
 
-// THE FIX: This function now correctly handles SPA navigation for all buttons.
-function navigateTo(page) {
-    showPage(page);
-}
+function navigateTo(page) { showPage(page); }
 
 window.onpopstate = function(event) {
     if (event.state && event.state.page) {
@@ -601,20 +629,25 @@ window.onpopstate = function(event) {
 };
 
 /* -------------------------------------------------
+   UI HELPERS
+   ------------------------------------------------- */
+function updateProfileButtonVisibility(page) {
+    const profileButton = document.getElementById('profile-button');
+    if (!profileButton) return;
+    if (page === 'home' || page === 'profile') {
+        profileButton.style.display = 'flex';
+    } else {
+        profileButton.style.display = 'none';
+    }
+}
+
+/* -------------------------------------------------
    OTP / LOGIN FLOW
    ------------------------------------------------- */
 function requestOTP() {
     const phone = document.getElementById('userPhone').value.trim();
     const fullName = document.getElementById('regFullName').value.trim();
-    if (!phone || !fullName) {
-        alert('لطفا تمام فیلدها را پر کنید.');
-        return;
-    }
-    const phonePattern = /^09\d{9}$/;
-    if (!phonePattern.test(phone)) {
-        alert("لطفا یک شماره موبایل معتبر ایرانی وارد کنید (مثال: 09123456789).");
-        return;
-    }
+    if (!phone || !fullName) { alert('لطفا تمام فیلدها را پر کنید.'); return; }
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     fetch('/api/request-otp/', {
         method: 'POST',
@@ -630,32 +663,15 @@ function verifyOTP() {
     const phone = document.getElementById('userPhone').value.trim();
     const code = document.getElementById('otpCode').value.trim();
     const fullName = document.getElementById('regFullName').value.trim();
-
-    if (!code || code.length !== 6) {
-        alert('لطفا کد ۶ رقمی را به درستی وارد کنید.');
-        return;
-    }
-
+    if (!code || code.length !== 6) { alert('لطفا کد ۶ رقمی را به درستی وارد کنید.'); return; }
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
     fetch('/api/verify-otp/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-        body: JSON.stringify({
-            phone_number: phone,
-            code: code,
-            full_name: fullName
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status === 'success') {
-            // THE FIX: Login was successful. Force a full page reload to the homepage.
-            // This ensures the server sends back the correct HTML for a logged-in user.
-            window.location.href = '/'; 
-        } else {
-            alert('خطا: ' + data.message);
-        }
+        body: JSON.stringify({ phone_number: phone, code: code, full_name: fullName })
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') window.location.href = '/';
+        else alert('خطا: ' + data.message);
     });
 }
 
@@ -664,11 +680,7 @@ function verifyOTP() {
    ------------------------------------------------- */
 function showProfilePanel() {
     const profilePage = document.getElementById('profilePage');
-    if (!profilePage) { console.error('Profile page element not found!'); return; }
-    if (!profilePage.classList.contains('hidden')) {
-        showPage('home'); // If it's open, close it
-        return;
-    }
+    if (!profilePage.classList.contains('hidden')) { showPage('home'); return; }
     fetch('/api/profile/').then(r => r.json()).then(data => {
         if (data.status === 'success') {
             const profile = data.profile;
@@ -679,18 +691,15 @@ function showProfilePanel() {
             document.getElementById('profileAbout').value = profile.about_me;
             
             const saveBtn = document.getElementById('saveProfileBtn');
-            saveBtn.disabled = true;
-            saveBtn.style.opacity = '0.5';
-            saveBtn.style.cursor = 'not-allowed';
-
+            saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'not-allowed';
             const form = document.getElementById('profileForm');
             const enableButton = () => {
-                saveBtn.disabled = false;
-                saveBtn.style.opacity = '1';
-                saveBtn.style.cursor = 'pointer';
+                saveBtn.disabled = false; saveBtn.style.opacity = '1'; saveBtn.style.cursor = 'pointer';
                 form.removeEventListener('input', enableButton);
             };
             form.addEventListener('input', enableButton);
+            
+            // Enter key logic for profile
             linkEnterToNext('profileFullName', 'profileAge');
             linkEnterToNext('profileAge', 'profileAddress');
             linkEnterToNext('profileAddress', 'profileAbout');
@@ -714,147 +723,130 @@ function saveProfile() {
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
         body: JSON.stringify(profileData)
     }).then(r => r.json()).then(data => {
-        if (data.status === 'success') {
-            alert('پروفایل شما با موفقیت ذخیره شد.');
-            showPage('home');
-        } else { alert('خطا در ذخیره پروفایل.'); }
+        if (data.status === 'success') { alert('پروفایل شما با موفقیت ذخیره شد.'); showPage('home'); }
+        else { alert('خطا در ذخیره پروفایل.'); }
     });
 }
+
 function logout() {
-    // THE FIX: Add the new, more informative confirmation message.
-    const confirmationMessage = "آیا برای خروج از حساب کاربری خود اطمینان دارید؟\n\nتوجه: برای ورود مجدد به این حساب کاربری باید همین نام و نام خانوادگی و شماره موبایل رو وارد کنید و کد تایید بگیرید. ";
-    if (confirm(confirmationMessage)) {
-        window.location.href = '/logout/';
-    }
+    const confirmationMessage = "آیا برای خروج از حساب کاربری خود اطمینان دارید؟\n\nتوجه: برای ورود مجدد، باید نام و شماره تماس خود را مجدداً وارد کنید.";
+    if (confirm(confirmationMessage)) { window.location.href = '/logout/'; }
 }
-function updateProfileButtonVisibility(page) {
-    const profileButton = document.getElementById('profile-button');
-    if (!profileButton) return;
 
-    // THE FIX: Show the button on the homepage AND the profile page.
-    if (page === 'home' || page === 'profile') {
-        profileButton.style.display = 'flex';
-    } else {
-        profileButton.style.display = 'none';
-    }
-}
 /* -------------------------------------------------
-   REVIEW & FINAL SUBMIT
+   ASSESSMENT LOGIC (UPDATED for New Architecture)
    ------------------------------------------------- */
-function showReviewPage() {
-    showPage('review');
-    const container = document.getElementById('reviewContent');
-    if (!container) return;
+function loadQuestions(testId = null) {
+    // If a testID is passed, update the global currentTestId
+    if (testId) {
+        currentTestId = testId;
+    }
 
-    let html = '';
-    questions.forEach(q => {
-        const answer = answers[q.id];
-        const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
+    if (!currentTestId) {
+        console.error("No test ID found to load.");
+        return;
+    }
 
-        html += `
-            <div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;">
-                <p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p>
-                <p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">
-                    ${answerText}
-                </p>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
+    currentQuestion = 0;
+    // THE FIX: Use the new URL structure with the Test ID
+    fetch(`/api/tests/${currentTestId}/questions/`)
+        .then(r => r.json())
+        .then(data => {
+            questions = data;
+            if (questions.length) renderQuestion();
+            else document.getElementById('questionContainer').innerHTML = '<p>سوالی برای نمایش وجود ندارد.</p>';
+            }
+        )
+        .catch(err => {
+            console.error(err);
+            document.getElementById('questionContainer').innerHTML = '<p style="color:red;">خطا در بارگذاری سوالات.</p>';
+        });
 }
 
-function editAnswers() {
-    // This simply takes the user back to the test page, which will
-    // automatically be on the last question.
-    showPage('skills-assessment');
-}
-/* -------------------------------------------------
-   ASSESSMENT & AI LOGIC
-   ------------------------------------------------- */
-function submitAnswers() {
+function submitAnswers(retryCount = 0) {
+    // Safety check: Ensure we know which test we are submitting
+    if (!currentTestId) {
+        alert("خطا: شناسه آزمون یافت نشد. لطفا صفحه را رفرش کنید.");
+        return;
+    }
+
     showPage('results');
     const resultsContainer = document.getElementById('resultsContent');
-    resultsContainer.innerHTML = '<p style="text-align: center; font-size: 1.2rem;">در حال تحلیل پاسخ‌ها... لطفاً چند لحظه صبر کنید.</p>';
     
-    // THE FIX: The user is logged in, so we don't need to send user_info anymore.
+    resultsContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <h3 style="margin-bottom: 10px;">در حال تحلیل هوشمند پاسخ‌ها...</h3>
+            <p style="color: hsl(var(--muted-foreground));">لطفاً شکیبا باشید، هوش مصنوعی در حال بررسی دقیق پروفایل شماست.</p>
+            ${retryCount > 0 ? `<p style="font-size: 0.9rem; color: orange;">تلاش مجدد (${retryCount}/3)...</p>` : ''}
+        </div>
+    `;
+
     const submissionData = {
-        responses: []
+        user_name: answers.user_name,
+        user_phone: answers.user_phone
     };
+    
     questions.forEach(q => {
-        const userAnswer = answers[q.id];
-        if (userAnswer !== undefined) {
-            submissionData.responses.push({
-                question_id: q.id,
-                question_text: q.question,
-                answer: userAnswer
-            });
+        if (answers[q.id] !== undefined) {
+            submissionData[q.id] = answers[q.id];
         }
     });
 
     const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
     if (!csrfTokenInput) {
-        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">خطای امنیتی: توکن یافت نشد. لطفاً صفحه را رفرش کنید.</p>';
+        resultsContainer.innerHTML = '<p style="color: red; text-align: center;">خطای امنیتی: توکن یافت نشد. لطفاً صفحه را رفرش کنید.</p>';
         return;
     }
 
-    fetch('/api/get-ai-analysis/', {
+    // --- THE FIX IS HERE ---
+    // We must use backticks (`) to insert the currentTestId variable
+    fetch(`/api/tests/${currentTestId}/submit/`, { 
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenInput.value },
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfTokenInput.value
+        },
         body: JSON.stringify(submissionData)
-    }).then(r => r.json()).then(data => {
+    })
+    .then(r => {
+        if (!r.ok) { throw new Error(`Server Error: ${r.status}`); }
+        return r.json();
+    })
+    .then(data => {
         if (data.status === 'success') {
-            showResults(data.analysis);
+            showResults(submissionData, data.analysis);
         } else {
-            resultsContainer.innerHTML = `<p style="text-align: center; color: red;">خطا در تحلیل پاسخ‌ها: ${data.message}</p>`;
+            throw new Error(data.message || "خطا در پردازش");
         }
-    }).catch(err => {
-        console.error(err);
-        resultsContainer.innerHTML = '<p style="text-align: center; color: red;">یک خطای غیرمنتظره در شبکه رخ داد. لطفاً دوباره تلاش کنید.</p>';
+    })
+    .catch(err => {
+        console.error("Attempt failed:", err);
+        
+        if (retryCount < 3) {
+            setTimeout(() => submitAnswers(retryCount + 1), 2000);
+        } else {
+            resultsContainer.innerHTML = `
+                <div class="results-card" style="text-align: center;">
+                    <h3 style="color: red; margin-bottom: 16px;">خطا در دریافت تحلیل</h3>
+                    <p>متاسفانه ارتباط با هوش مصنوعی برقرار نشد.</p>
+                    <p style="font-size: 0.9rem; color: gray; margin-bottom: 20px;">${err.message}</p>
+                    <button class="btn btn-primary" onclick="submitAnswers()">تلاش دستی مجدد</button>
+                </div>
+            `;
+        }
     });
 }
 
-function showResults(analysis) {
-    const container = document.getElementById('resultsContent');
-    if (!container) return;
-    
-    // THE FIX: The user's name is now part of the Django template context, not the JS data.
-    const userName = "{{ user.full_name|default:'کاربر مهمان' }}";
-    document.querySelector('#resultsPage .results-header p').textContent = 
-        `${userName} عزیز، این تحلیل اختصاصی بر اساس پاسخ‌های شما آماده شده است.`;
-    
-    let html = `
-        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">تحلیل کلی</h2><p style="line-height: 1.8;">${analysis.analysis}</p></div>
-        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">مسیرهای شغلی پیشنهادی</h2>
-            ${analysis.recommended_jobs.map(career => `<div class="career-item"><div class="career-title">${career.job}</div><p style="color: hsl(var(--muted-foreground));">${career.reason}</p></div>`).join('') || '<p>شغلی برای پیشنهاد یافت نشد.</p>'}
-        </div>
-        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">نقاط کلیدی برای توسعه</h2><ul style="list-style-type: none; padding-right: 10px;">
-                ${analysis.development_points.map(point => `<li style="margin-bottom: 12px; font-weight: 500;">✓ ${point}</li>`).join('') || '<p>نقطه‌ای برای توسعه یافت نشد.</p>'}
-            </ul></div>
-        <div class="results-card"><h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">خلاصه مسیر شغلی</h2><p style="line-height: 1.8;">${analysis.career_path}</p></div>
-    `;
-    container.innerHTML = html;
-}
-
-function loadQuestions() {
-    currentQuestion = 0;
-    fetch('/api/questions/').then(r => r.json()).then(data => {
-        questions = data;
-        if (questions.length) renderQuestion();
-        else document.getElementById('questionContainer').innerHTML = '<p>سوالی برای نمایش وجود ندارد.</p>';
-    }).catch(err => {
-        console.error(err);
-        document.getElementById('questionContainer').innerHTML = '<p style="color:red;">خطا در بارگذاری سوالات.</p>';
-    });
-}
-
-// In your <script> block
 function renderQuestion() {
     const q = questions[currentQuestion];
     const container = document.getElementById('questionContainer');
     if (!container) return;
     const progress = ((currentQuestion + 1) / questions.length) * 100;
     document.getElementById('progressBar').style.width = `${progress}%`;
+    
     let html = `<div class="question-card"><p style="color:hsl(var(--muted-foreground));margin-bottom:8px;">سوال ${currentQuestion + 1} از ${questions.length}</p><h2 class="question-title">${q.question}</h2>`;
+    
     if (q.type === 'multiple') {
         html += '<div>';
         q.options.forEach(opt => {
@@ -868,17 +860,68 @@ function renderQuestion() {
         html += `<div class="slider-container"><input type="range" class="slider" min="${q.min}" max="${q.max}" value="${val}" oninput="updateSlider(${q.id}, this)"><div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:600;"><span>${q.min}</span><span id="sliderValue-${q.id}">${val}</span><span>${q.max}</span></div><div style="display:flex;justify-content:space-between;font-size:.85rem;color:hsl(var(--muted-foreground));padding:0 4px;"><span>کاملا مخالفم</span><span>کاملا موافقم</span></div></div>`;
     } else if (q.type === 'text') {
         const val = answers[q.id] ?? '';
-        // THE FIX: Add oninput back to keep the 'answers' object always up-to-date.
+        // Added oninput back for real-time updates
         html += `<input type="text" id="textAnswerInput" class="input-field" value="${val}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
     }
     html += '</div>';
     container.innerHTML = html;
+    
     if (q.type === 'slider') {
         const slider = container.querySelector('.slider');
         updateSliderFill(slider);
     }
+    
+    // --- KEYBOARD LISTENERS (Enter Key) ---
+    // Clear previous listeners specifically for questions
+    document.onkeyup = null; 
+
+    if (q.type === 'text') {
+        // For text, we link the input to the Next button
+        linkEnterToNext('textAnswerInput', 'nextBtn');
+    } else {
+        // For sliders/multiple choice, global enter clicks Next
+        document.onkeyup = function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('nextBtn').click();
+            }
+        };
+    }
+
+    document.getElementById('prevBtn').disabled = currentQuestion === 0;
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'مشاهده نتایج' : 'بعدی';
+}
+function loadTestsMenu() {
+    showPage('tests-menu');
+    const container = document.getElementById('testsGrid');
+    container.innerHTML = '<p>در حال بارگذاری...</p>';
+
+    fetch('/api/tests/list/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success' && data.tests.length > 0) {
+                container.innerHTML = data.tests.map(test => `
+                    <div class="question-card" style="cursor: pointer; transition: transform 0.2s;" 
+                         onclick="startSpecificTest(${test.id})">
+                        <h3 style="color: hsl(var(--primary)); margin-bottom: 8px;">${test.name}</h3>
+                        <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem;">${test.description || ''}</p>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">شروع آزمون</button>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p>فعلاً آزمون تخصصی دیگری موجود نیست.</p>';
+            }
+        });
 }
 
+function startSpecificTest(testId) {
+    answers = {}; // Clear previous answers
+    loadQuestions(testId); // Load the specific test
+    showPage('skills-assessment');
+}
+/* -------------------------------------------------
+   ANSWER HANDLERS & HELPERS
+   ------------------------------------------------- */
 function selectOption(id, opt) { answers[id] = opt; renderQuestion(); }
 function updateSlider(id, el) {
     const val = parseInt(el.value, 10);
@@ -892,21 +935,17 @@ function updateSliderFill(el) {
     const pct = ((val - min) / (max - min)) * 100;
     el.style.setProperty('--track-fill', `${pct}%`);
 }
-function updateText(id, val) { 
-    answers[id] = val.trim(); 
-}
-function previousQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
+function updateText(id, val) { answers[id] = val.trim(); }
+
 function nextQuestion() {
     const currentQ = questions[currentQuestion];
-
-    // THE FIX: This simple check now works for ALL question types because 'answers' is always up-to-date.
     const currentAnswer = answers[currentQ.id];
+    
     if (currentAnswer === undefined || currentAnswer === '') {
         alert("لطفا قبل از ادامه به این سوال پاسخ دهید.");
-        return; // This will now correctly stop the function.
+        return;
     }
 
-    // The rest of the function is correct
     if (currentQuestion < questions.length - 1) {
         currentQuestion++;
         renderQuestion();
@@ -914,75 +953,147 @@ function nextQuestion() {
         showReviewPage();
     }
 }
-/* -------------------------------------------------
-   GLOBAL EVENT LISTENERS (The Final "Enter Key" Fix)
-   ------------------------------------------------- */
+function previousQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
+
+function showReviewPage() {
+    showPage('review');
+    const container = document.getElementById('reviewContent');
+    if (!container) return;
+    let html = '';
+    questions.forEach(q => {
+        const answer = answers[q.id];
+        const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
+        html += `<div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;"><p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p><p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">${answerText}</p></div>`;
+    });
+    container.innerHTML = html;
+}
+function editAnswers() { showPage('skills-assessment'); }
+
+function showResults(userData, analysis) {
+    const container = document.getElementById('resultsContent');
+    if (!container) return;
+
+    const userName = "{{ user.full_name|default:'کاربر مهمان' }}";
+    document.querySelector('#resultsPage .results-header p').textContent = 
+        `${userName} عزیز، تحلیل اختصاصی شما آماده است.`;
+
+    // SAFE GUARDS: Ensure arrays exist to prevent "map of undefined" error
+    const jobs = analysis.recommended_jobs || [];
+    const devPath = analysis.development_path || analysis.development_points || []; 
+    const mbti = analysis.mbti || { type: "نامشخص", description: "اطلاعات کافی نیست" };
+    const domain = analysis.dominant_domain || "نامشخص";
+    const skills = analysis.skills_analysis || "تحلیل مهارت در دسترس نیست";
+
+    let html = `
+        <!-- 1. MBTI & Domain (New Section) -->
+        <div class="results-card" style="background: linear-gradient(135deg, hsl(var(--secondary)) 0%, #fff 100%);">
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h2 style="color: hsl(var(--primary)); font-size: 2rem; margin-bottom: 8px;">${mbti.type}</h2>
+                    <p style="color: hsl(var(--foreground)); font-weight: 600;">${domain}</p>
+                </div>
+                <div style="flex: 2; min-width: 280px; border-right: 2px solid hsl(var(--border)); padding-right: 20px;">
+                    <p style="color: hsl(var(--muted-foreground)); line-height: 1.7;">${mbti.description}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Skills Analysis -->
+        <div class="results-card">
+            <h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">تحلیل مهارت‌ها</h2>
+            <p style="line-height: 1.8;">${skills}</p>
+        </div>
+
+        <!-- 3. Recommended Jobs (With Dynamic Buttons) -->
+        <div class="results-card">
+            <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">شغل‌های پیشنهادی</h2>
+            ${jobs.map((career, index) => `
+                <div class="career-item" style="margin-bottom: 16px; padding: 20px; border: 1px solid hsl(var(--border)); border-radius: 12px; background: ${index === 0 ? 'hsl(var(--secondary))' : 'white'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div class="career-title" style="font-weight: bold; font-size: 1.1rem; color: #263b80;">${career.job}</div>
+                        ${index === 0 ? '<span style="background:#263b80; color:white; padding:2px 10px; border-radius:12px; font-size:0.8rem;">پیشنهاد اصلی</span>' : ''}
+                    </div>
+                    <p style="color: hsl(var(--foreground)); margin-bottom: 12px;">${career.reason}</p>
+                    
+                    ${career.test_id ? `
+                        <button class="btn btn-primary" style="font-size: 0.9rem; padding: 8px 16px;" 
+                                onclick="startSpecificTest(${career.test_id})">
+                            سنجش سطح تخصصی
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('') || '<p>شغلی یافت نشد.</p>'}
+        </div>
+
+        <!-- 4. Development Path -->
+        <div class="results-card">
+            <h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">مسیر رشد و یادگیری</h2>
+            <ul style="list-style-type: none; padding: 0;">
+                ${devPath.map(step => `
+                    <li style="margin-bottom: 12px; padding: 12px; background: #fff; border-radius: 8px; border-right: 4px solid hsl(var(--primary)); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        ${step}
+                    </li>
+                `).join('') || '<p>اطلاعات مسیر رشد موجود نیست.</p>'}
+            </ul>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
 function linkEnterToNext(currentInputId, nextElementId) {
     const currentInput = document.getElementById(currentInputId);
     const nextElement = document.getElementById(nextElementId);
-
     if (!currentInput || !nextElement) return;
-
     currentInput.addEventListener('keyup', function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
-            // If the next element is an input, focus it. If it's a button, click it.
-            if (nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA') {
-                nextElement.focus();
-            } else {
-                nextElement.click();
-            }
+            if (nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA') { nextElement.focus(); } 
+            else { nextElement.click(); }
+        }
+    });
+}
+
+function setupEnterKey(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    if (!input || !button) return;
+    input.addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            button.click();
         }
     });
 }
 
 /* -------------------------------------------------
-   INITIALISE & BINDINGS
+   INITIALISE
    ------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
     const initialPage = '{{ initial_page|default:"user-info" }}';
     const isAuthenticated = {{ is_authenticated|yesno:"true,false" }};
-    
+    // This gets the ID of the primary test from the backend
+    const startTestId = "{{ start_test_id|default:'' }}"; 
+
+    // 1. Show the correct page on load
     showPage(initialPage, false);
     history.replaceState({ page: initialPage }, '', `#${initialPage}`);
 
-    if (isAuthenticated) {
-        const startTestButton = document.querySelector('.home-button');
-        if (startTestButton) {
-            startTestButton.setAttribute('onclick', "showPage('skills-assessment'); loadQuestions();");
+    // 2. If logged in, update the "Start Assessment" button
+    if (isAuthenticated && startTestId) {
+        const startBtn = document.getElementById('startPrimaryBtn');
+        if (startBtn) {
+            // Update the button to start the specific primary test
+            startBtn.setAttribute('onclick', `startSpecificTest(${startTestId})`);
         }
     }
+
+    // 3. Setup Enter Keys
+    setupEnterKey('regFullName', 'requestOtpBtn');
+    setupEnterKey('userPhone', 'requestOtpBtn');
+    setupEnterKey('otpCode', 'verifyOtpBtn');
 });
-{% comment %} document.addEventListener('keyup', function(event) {
-    if (event.key !== 'Enter') return; // Do nothing if it's not the Enter key
 
-    // Find which page is currently visible
-    const visiblePage = document.querySelector('.page-content:not(.hidden)');
-    if (!visiblePage) return;
-
-    // Based on the visible page, decide which button to "click"
-    switch (visiblePage.id) {
-        case 'userInfoPage':
-            event.preventDefault();
-            document.getElementById('requestOtpBtn').click();
-            break;
-        case 'otpPage':
-            event.preventDefault();
-            document.getElementById('verifyOtpBtn').click();
-            break;
-        case 'skillsAssessmentPage':
-            event.preventDefault();
-            document.getElementById('nextBtn').click();
-            break;
-        case 'profilePage':
-            event.preventDefault();
-            const saveBtn = document.getElementById('saveProfileBtn');
-            if (saveBtn && !saveBtn.disabled) {
-                saveBtn.click();
-            }
-            break;
-    }
-}); {% endcomment %}
 function downloadResults() { alert('این قابلیت در حال توسعه است.'); }
 function shareResults() { alert('این قابلیت در حال توسعه است.'); }
 </script>
