@@ -449,24 +449,23 @@
                 
                 <!-- 1. The explanation text is now OUTSIDE the form card -->
                 <div style="text-align: center; margin-bottom: 24px; padding: 20px; background: hsl(var(--secondary)); border-radius: 12px; line-height: 1.8;">
-                    <h2 style="color: hsl(var(--primary-glow)); margin-bottom: 16px;">تست استعدادیابی شغلی کافنا</h2>
+                    <h2 style="color: hsl(var(--primary-glow)); margin-bottom: 16px;">اپلیکیشن هوشمند کافنا</h2>
                     <p style="font-size: 1.1rem; color: #333;">
-                        با وارد کردن نام و شماره موبایل، کد تأیید برای شما ارسال می‌شود تا بتوانید تست استعدادیابی شغلی را شروع کنید.<br>
-                        پس از تکمیل تست، تحلیل هوش مصنوعی مسیرهای شغلی مناسب شما را نمایش می‌دهد.
+                        با اپلیکیشن هوشمند کافنا مسیر شغلیت رو خلق کن
                     </p>
                 </div>
 
                 <!-- 2. The form card is now a single, clean element -->
                 <div class="question-card">
-                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">ثبت‌ نام</h2>
+                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">ورود به اپلیکیشن</h2>
                     {% csrf_token %}
                     <div style="margin-bottom: 16px;">
-                        <label for="regFullName">نام و نام خانوادگی</label>
-                        <input type="text" id="regFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
+                        <label for="userPhone">شماره تماس</label>
+                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789" maxlength="11" pattern="09[0-9]{9}">   
                     </div>
                     <div style="margin-bottom: 32px;">
-                        <label for="userPhone">شماره تماس</label>
-                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789" maxlength="11" pattern="09[0-9]{9}">
+                        <label for="regFullName">نام و نام خانوادگی</label>
+                        <input type="text" id="regFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
                     </div>
                     <button id="requestOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="requestOTP()">دریافت کد تایید</button>
                 </div>
@@ -524,6 +523,29 @@
         </div>
 
     </div>
+
+    <div id="aboutPage" class="page-content hidden">
+        <div class="container">
+            <h1 style="font-size: 2.5rem; margin-bottom: 32px;">درباره ما</h1>
+            <div class="question-card">
+                <!-- ADD THIS CONTENT -->
+                <p>کافنا یک پلتفرم هوشمند استعدادیابی شغلی است که به افراد کمک می‌کند تا مسیر حرفه‌ای ایده‌آل خود را کشف کنند. ما با استفاده از تحلیل‌های پیشرفته، به کاربران کمک می‌کنیم تا نقاط قوت خود را بشناسند و یک برنامه عملی برای رسیدن به اهداف شغلی خود تدوین کنند.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- In your contactPage div -->
+    <div id="contactPage" class="page-content hidden">
+        <div class="container">
+            <h1 style="font-size: 2.5rem; margin-bottom: 32px;">تماس با ما</h1>
+            <div class="question-card">
+                <!-- ADD THIS CONTENT -->
+                <p>برای پشتیبانی و اطلاعات بیشتر می‌توانید از طریق ایمیل زیر با ما در ارتباط باشید:</p>
+                <p style="font-weight: 600; margin-top: 16px;">support@kafna.ir</p>
+            </div>
+        </div>
+    </div>
+
 
 <script>
 /* -------------------------------------------------
