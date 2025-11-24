@@ -31,27 +31,40 @@ genai.configure(api_key=config('GOOGLE_API_KEY'))
 # }
 # """
 
-def get_ai_analysis(user_answers, system_prompt): # <-- Add system_prompt argument
+def get_ai_analysis(rich_answers_data, system_prompt):
     """
-    Takes user answers and a specific system_prompt, calls the AI,
-    and returns a structured analysis.
+    Takes RICH data (questions + answers), converts to SIMPLE data for AI,
+    and returns the analysis.
     """
     try:
+        # 1. Extract just the ID and Answer for the AI
+        # The AI already knows the questions from the System Prompt
+        simple_answers = {}
+        
+        # Handle cases where data might be old format vs new format
+        if 'responses' in rich_answers_data:
+            for item in rich_answers_data['responses']:
+                simple_answers[item['question_id']] = item['answer']
+        else:
+            # Fallback for old data format
+            simple_answers = rich_answers_data
+
         model = genai.GenerativeModel(
             model_name='gemini-2.5-flash',
-            system_instruction=system_prompt # <-- Use the passed-in prompt
+            system_instruction=system_prompt
         )
-        answers_json_string = json.dumps(user_answers, indent=2, ensure_ascii=False)
+        
+        answers_json_string = json.dumps(simple_answers, indent=2, ensure_ascii=False)
         user_message = f"Analyze the following user answers:\n\n{answers_json_string}"
+        
         response = model.generate_content(user_message)
         ai_response_text = response.text.strip().replace('```json', '').replace('```', '')
         return json.loads(ai_response_text)
+
     except Exception as e:
-        print(f"An error occurred with the Google AI API: {e}")
-        # 7. Return a default error message if the API call fails
+        print(f"AI Error: {e}")
         return {
-            "analysis": "متاسفانه در حال حاضر امکان تحلیل پاسخ‌های شما وجود ندارد. (خطای هوش مصنوعی)",
+            "mbti": {"type": "خطا", "description": "عدم دریافت پاسخ از هوش مصنوعی"},
             "recommended_jobs": [],
-            "development_points": [],
-            "career_path": "خطا در ارتباط با سرویس تحلیلگر."
+            "development_path": []
         }

@@ -30,7 +30,7 @@ class CustomUser(AbstractUser):
     address = models.CharField(max_length=255, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
     about_me = models.TextField(blank=True)
-
+    is_premium = models.BooleanField(default=False)
     objects = CustomUserManager()
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = []

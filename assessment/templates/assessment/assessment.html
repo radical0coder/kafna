@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -359,37 +360,148 @@
         #profile-button:hover {
             transform: scale(1.1);
         }
-        .spinner {
-            border: 4px solid hsla(var(--primary), 0.1);
-            border-left-color: hsl(var(--primary));
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px auto;
-        }
+        /* Loading Spinner */
+            .loading-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 40px;
+                text-align: center;
+            }
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid hsl(var(--secondary));
+                border-top: 5px solid hsl(var(--primary));
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            /* --- NEW UI ELEMENTS --- */
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+            /* 1. Profile Completeness Bar */
+            .progress-container {
+                margin-bottom: 24px;
+            }
+            .progress-label {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.9rem;
+                color: hsl(var(--muted-foreground));
+                margin-bottom: 8px;
+            }
+            .progress-track {
+                width: 100%;
+                height: 10px;
+                background: hsl(var(--secondary));
+                border-radius: 5px;
+                overflow: hidden;
+            }
+            .progress-bar-fill {
+                height: 100%;
+                background: linear-gradient(90deg, hsl(var(--primary)), #8b5cf6); /* Purple gradient */
+                width: 0%;
+                transition: width 1s ease-in-out;
+            }
 
-        .loading-container {
-            text-align: center;
-            padding: 40px;
-            color: hsl(var(--foreground));
-        }
+            /* 2. Prominent Transition Button (CTA) */
+            .btn-cta {
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); /* Blue gradient */
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+                width: 100%;
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: transform 0.2s;
+            }
+            .btn-cta:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            }
+
+            /* 3. Better Review Items */
+            .review-item {
+                background: #fff;
+                border: 1px solid hsl(var(--border));
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 12px;
+                border-right: 4px solid hsl(var(--secondary)); /* Subtle accent */
+            }
+            /* History Item Styling */
+            .history-card {
+                background: #fff;
+                border: 1px solid hsl(var(--border));
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                transition: all 0.2s ease;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                position: relative;
+                overflow: hidden;
+            }
+            .history-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                border-color: hsl(var(--primary));
+            }
+            .history-card::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 6px;
+                background: hsl(var(--primary));
+                border-radius: 3px 0 0 3px;
+            }
+            .history-info h3 {
+                font-size: 1.1rem;
+                color: hsl(var(--foreground));
+                margin-bottom: 4px;
+            }
+            .history-meta {
+                font-size: 0.85rem;
+                color: hsl(var(--muted-foreground));
+                display: flex;
+                gap: 15px;
+            }
+            .history-status {
+                font-size: 0.8rem;
+                padding: 4px 10px;
+                border-radius: 12px;
+                background: #e0f2fe;
+                color: #0284c7;
+                font-weight: bold;
+            }
     </style>
 </head>
 <body>
+    <!-- Profile Button (Visible only when logged in) -->
     {% if user.is_authenticated %}
         <div id="profile-button" onclick="showProfilePanel()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </div>
     {% endif %}
-    <!-- Main Content -->
-    <div id="mainContent">
-        <!-- Home Page -->
+
+    <!-- Main Content Container -->
+    <div id="mainContent" class="main-content">
+        
+        <!-- 1. Home Page -->
         <div id="homePage" class="page-content hidden">
             <div class="home-page">
                 <div class="home-container">
@@ -406,11 +518,43 @@
                             <h2>آزمون های سطح سنجی</h2>
                             <p>سنجش سطح مهارت در حوزه های مختلف</p>
                         </button>
+                        <button class="home-button" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" onclick="showPage('subscription')">
+                            <h2>خرید اشتراک ویژه</h2>
+                            <p>دسترسی نامحدود به تمامی آزمون‌ها و تحلیل‌ها</p>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- 2. Login / User Info Page -->
+        <div id="userInfoPage" class="page-content hidden">
+            <div class="test-container" style="padding-top: 80px;">
+                <!-- Explanation Text -->
+                <div style="text-align: center; margin-bottom: 24px; padding: 20px; background: hsl(var(--secondary)); border-radius: 12px; line-height: 1.8;">
+                    <h2 style="color: hsl(var(--primary-glow)); margin-bottom: 16px;">اپلیکیشن هوشمند کافنا</h2>
+                    <p style="font-size: 1.1rem; color: #333;">
+                        با اپلیکیشن هوشمند کافنا مسیر شغلیت رو خلق کن
+                    </p>
+                </div>
+                <!-- Login Form -->
+                <div class="question-card">
+                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">ورود به اپلیکیشن</h2>
+                    {% csrf_token %}
+                    <div style="margin-bottom: 16px;">
+                        <label for="userPhone">شماره تماس(به انگلیسی) </label>
+                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789" maxlength="11" pattern="09[0-9]{9}">   
+                    </div>
+                    <div style="margin-bottom: 32px;">
+                        <label for="regFullName">نام و نام خانوادگی</label>
+                        <input type="text" id="regFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
+                    </div>
+                    <button id="requestOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="requestOTP()">دریافت کد تایید</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. OTP Entry Page -->
         <div id="otpPage" class="page-content hidden">
             <div class="test-container" style="padding-top: 80px;">
                 <div class="question-card">
@@ -427,73 +571,72 @@
             </div>
         </div>
 
-                <!-- NEW: The Profile Panel Page -->
+        <!-- 4. Profile Panel Page -->
         <div id="profilePage" class="page-content hidden">
-        <div class="test-container" style="padding-top: 80px;">
-            <div class="question-card" id="profileForm">
-                <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">پروفایل شما</h2>
-                
-                <div style="margin-bottom: 16px;">
-                    <label>شماره تماس (غیرقابل تغییر)</label>
-                    <input type="text" id="profilePhone" class="input-field" readonly>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label for="profileFullName">نام و نام خانوادگی</label>
-                    <input type="text" id="profileFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label for="profileAge">سن</label>
-                    <input type="number" id="profileAge" class="input-field" placeholder="سن خود را وارد کنید...">
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label for="profileAddress">آدرس (شهر)</label>
-                    <input type="text" id="profileAddress" class="input-field" placeholder="شهر محل سکونت...">
-                </div>
-                <div style="margin-bottom: 32px;">
-                    <label for="profileAbout">درباره من</label>
-                    <textarea id="profileAbout" class="input-field" rows="4" placeholder="چند جمله درباره خودتان..."></textarea>
-                </div>
+            <div class="test-container" style="padding-top: 80px;">
+                <div class="question-card" id="profileForm">
+                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">پروفایل شما</h2>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <label>شماره تماس (غیرقابل تغییر)</label>
+                        <input type="text" id="profilePhone" class="input-field" readonly>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label for="profileFullName">نام و نام خانوادگی</label>
+                        <input type="text" id="profileFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label for="profileAge">سن</label>
+                        <input type="number" id="profileAge" class="input-field" placeholder="سن خود را وارد کنید...">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label for="profileAddress">آدرس (شهر)</label>
+                        <input type="text" id="profileAddress" class="input-field" placeholder="شهر محل سکونت...">
+                    </div>
+                    <div style="margin-bottom: 32px;">
+                        <label for="profileAbout">درباره من</label>
+                        <textarea id="profileAbout" class="input-field" rows="4" placeholder="چند جمله درباره خودتان..."></textarea>
+                    </div>
 
-                <div class="nav-buttons" style="justify-content: space-between;">
-                    <button class="btn btn-secondary" onclick="logout()">خروج از حساب</button>
-
-                    <button id="saveProfileBtn" class="btn btn-primary" onclick="saveProfile()">ذخیره تغییرات</button>
+                    <div class="nav-buttons" style="justify-content: space-between;">
+                        <button class="btn btn-secondary" onclick="logout()">خروج از حساب</button>
+                        <button class="btn btn-secondary" style="background: hsl(var(--primary)); color: white;" onclick="loadHistory()">تاریخچه آزمون‌ها</button>
+                        <button id="saveProfileBtn" class="btn btn-primary" onclick="saveProfile()">ذخیره تغییرات</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-        <!-- Replace the entire userInfoPage div with this corrected version -->
-        <div id="userInfoPage" class="page-content hidden">
-            <div class="test-container" style="padding-top: 80px;">
-                
-                <!-- 1. The explanation text is now OUTSIDE the form card -->
-                <div style="text-align: center; margin-bottom: 24px; padding: 20px; background: hsl(var(--secondary)); border-radius: 12px; line-height: 1.8;">
-                    <h2 style="color: hsl(var(--primary-glow)); margin-bottom: 16px;">اپلیکیشن هوشمند کافنا</h2>
-                    <p style="font-size: 1.1rem; color: #333;">
-                        با اپلیکیشن هوشمند کافنا مسیر شغلیت رو خلق کن
-                    </p>
+        <!-- 5. History List Page -->
+        <div id="historyPage" class="page-content hidden">
+            <div class="results-container">
+                <div class="results-header">
+                    <h1 class="results-title">تاریخچه آزمون‌های شما</h1>
+                    <p>لیست تمام ارزیابی‌هایی که تا کنون انجام داده‌اید.</p>
                 </div>
-
-                <!-- 2. The form card is now a single, clean element -->
-                <div class="question-card">
-                    <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">ورود به اپلیکیشن</h2>
-                    {% csrf_token %}
-                    <div style="margin-bottom: 16px;">
-                        <label for="userPhone">شماره تماس</label>
-                        <input type="tel" id="userPhone" class="input-field" placeholder="مثال: 09123456789" maxlength="11" pattern="09[0-9]{9}">   
-                    </div>
-                    <div style="margin-bottom: 32px;">
-                        <label for="regFullName">نام و نام خانوادگی</label>
-                        <input type="text" id="regFullName" class="input-field" placeholder="نام کامل خود را وارد کنید...">
-                    </div>
-                    <button id="requestOtpBtn" class="btn btn-primary" style="width: 100%;" onclick="requestOTP()">دریافت کد تایید</button>
+                <div id="historyList" style="display: flex; flex-direction: column; gap: 16px;"></div>
+                <div class="action-buttons" style="margin-top: 32px;">
+                    <button class="btn btn-secondary" onclick="showProfilePanel()">بازگشت به پروفایل</button>
                 </div>
+            </div>
+        </div>
 
-    </div>
-</div>
+        <!-- 6. History Review Page (ReadOnly) -->
+        <div id="historyReviewPage" class="page-content hidden">
+            <div class="results-container">
+                <div class="results-header">
+                    <h1 class="results-title">مرور پاسخ‌های ثبت شده</h1>
+                    <div id="historyMeta" style="color: hsl(var(--muted-foreground)); margin-top: 8px;"></div>
+                </div>
+                <div id="historyReviewContent" class="results-card"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="showPage('history')">بازگشت به لیست</button>
+                    <button id="viewAnalysisBtn" class="btn btn-primary" onclick="viewHistoryAnalysis()">مشاهده تحلیل هوش مصنوعی</button>
+                </div>
+            </div>
+        </div>
 
-        <!-- Skills Assessment Page -->
+        <!-- 7. Skills Assessment Page (The Test) -->
         <div id="skillsAssessmentPage" class="page-content hidden">
             <div class="test-container">
                 <div class="progress-bar">
@@ -501,9 +644,8 @@
                 </div>
                 <div id="questionContainer"></div>
                 <div class="nav-buttons">
-                    <!-- ADD THIS NEW BUTTON -->
                     <button class="btn btn-secondary" onclick="navigateTo('home')">انصراف</button> 
-                    <div> <!-- Wrap the existing buttons in a div for better layout -->
+                    <div> 
                         <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()">قبلی</button>
                         <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">بعدی</button>
                     </div>
@@ -511,7 +653,7 @@
             </div>
         </div>
 
-        <!-- review page-->
+        <!-- 8. Review Answers Page (Before Submit) -->
         <div id="reviewPage" class="page-content hidden">
             <div class="results-container">
                 <div class="results-header">
@@ -526,7 +668,7 @@
             </div>
         </div>
 
-        <!-- Results Page -->
+        <!-- 9. Results Page (AI Output) -->
         <div id="resultsPage" class="page-content hidden">
             <div class="results-container">
                 <div class="results-header">
@@ -543,107 +685,163 @@
             </div>
         </div>
 
-    </div>
-
-    <div id="aboutPage" class="page-content hidden">
-        <div class="container">
-            <h1 style="font-size: 2.5rem; margin-bottom: 32px;">درباره ما</h1>
-            <div class="question-card">
-                <!-- ADD THIS CONTENT -->
-                <p>کافنا یک پلتفرم هوشمند استعدادیابی شغلی است که به افراد کمک می‌کند تا مسیر حرفه‌ای ایده‌آل خود را کشف کنند. ما با استفاده از تحلیل‌های پیشرفته، به کاربران کمک می‌کنیم تا نقاط قوت خود را بشناسند و یک برنامه عملی برای رسیدن به اهداف شغلی خود تدوین کنند.</p>
+        <!-- 10. Tests Menu Page -->
+        <div id="testsMenuPage" class="page-content hidden">
+            <div class="results-container">
+                <div class="results-header">
+                    <h1 class="results-title">آزمون‌های تخصصی</h1>
+                    <p>برای سنجش دقیق‌تر، یکی از آزمون‌های زیر را انتخاب کنید.</p>
+                </div>
+                <div id="testsGrid" style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));"></div>
+                <div class="action-buttons" style="margin-top: 32px;">
+                    <button class="btn btn-secondary" onclick="showPage('home')">بازگشت</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="testsMenuPage" class="page-content hidden">
-        <div class="results-container">
-            <div class="results-header">
-                <h1 class="results-title">آزمون‌های تخصصی</h1>
-                <p>برای سنجش دقیق‌تر، یکی از آزمون‌های زیر را انتخاب کنید.</p>
-            </div>
-            
-            <!-- This grid will be filled by JavaScript -->
-            <div id="testsGrid" style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-                <!-- Tests will appear here -->
-            </div>
-
-            <div class="action-buttons" style="margin-top: 32px;">
-                <button class="btn btn-secondary" onclick="showPage('home')">بازگشت</button>
+        <!-- 11. About Page -->
+        <div id="aboutPage" class="page-content hidden">
+            <div class="container">
+                <h1 style="font-size: 2.5rem; margin-bottom: 32px;">درباره ما</h1>
+                <div class="question-card">
+                    <p>کافنا یک پلتفرم هوشمند استعدادیابی شغلی است که به افراد کمک می‌کند تا مسیر حرفه‌ای ایده‌آل خود را کشف کنند.</p>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- In your contactPage div -->
-    <div id="contactPage" class="page-content hidden">
-        <div class="container">
-            <h1 style="font-size: 2.5rem; margin-bottom: 32px;">تماس با ما</h1>
-            <div class="question-card">
-                <!-- ADD THIS CONTENT -->
-                <p>برای پشتیبانی و اطلاعات بیشتر می‌توانید از طریق ایمیل زیر با ما در ارتباط باشید:</p>
-                <p style="font-weight: 600; margin-top: 16px;">support@kafna.ir</p>
+        <!-- 12. Contact Page -->
+        <div id="contactPage" class="page-content hidden">
+            <div class="container">
+                <h1 style="font-size: 2.5rem; margin-bottom: 32px;">تماس با ما</h1>
+                <div class="question-card">
+                    <p>برای پشتیبانی و اطلاعات بیشتر می‌توانید از طریق ایمیل زیر با ما در ارتباط باشید:</p>
+                    <p style="font-weight: 600; margin-top: 16px;">support@kafna.ir</p>
+                </div>
             </div>
         </div>
-    </div>
 
+        <!-- 13. subscription plans-->
+        <div id="subscriptionPage" class="page-content hidden">
+            <div class="results-container" style="max-width: 900px;">
+                <div class="results-header">
+                    <h1 class="results-title" style="color: #d97706;">ارتقا به نسخه حرفه‌ای</h1>
+                    <p>برای دسترسی به آزمون‌های تخصصی و نقشه‌ی راه دقیق، اشتراک تهیه کنید.</p>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 40px;">
+                    <!-- Free Plan -->
+                    <div class="question-card" style="flex: 1; min-width: 300px; border: 1px solid #ddd; opacity: 0.8;">
+                        <h3>نسخه رایگان</h3>
+                        <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۰ تومان</div>
+                        <ul style="list-style: none; line-height: 2;">
+                            <li>✅ تست استعدادیابی اولیه</li>
+                            <li>✅ مشاهده ۳ شغل پیشنهادی</li>
+                            <li>❌ آزمون‌های سطح‌سنجی تخصصی</li>
+                            <li>❌ نقشه راه ۶ ماهه</li>
+                        </ul>
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="showPage('home')">بازگشت</button>
+                    </div>
+
+                    <!-- Pro Plan -->
+                    <div class="question-card" style="flex: 1; min-width: 300px; border: 2px solid hsl(var(--primary)); transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <div style="background: hsl(var(--primary)); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);">پیشنهاد ویژه</div>
+                        <h3 style="color: hsl(var(--primary));">نسخه حرفه‌ای</h3>
+                        <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۹۹,۰۰۰ تومان</div>
+                        <ul style="list-style: none; line-height: 2;">
+                            <li>✅ تست استعدادیابی اولیه</li>
+                            <li>✅ مشاهده ۳ شغل پیشنهادی</li>
+                            <li>✅ <b>دسترسی نامحدود</b> به تمام آزمون‌های تخصصی</li>
+                            <li>✅ دریافت <b>نقشه راه دقیق</b> و منابع یادگیری</li>
+                        </ul>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="buySubscription()">خرید اشتراک</button>
+                    </div>
+                    <div style="max-width: 400px; margin: 40px auto; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">کد تخفیف یا کد سازمانی دارید؟</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="promoCodeInput" class="input-field" placeholder="کد را اینجا وارد کنید..." style="text-align: center;">
+                            <button class="btn btn-primary" onclick="redeemCode()">ثبت</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- End of mainContent -->
+
+    <!-- SCRIPTS START HERE -->
+    <!-- (Your existing script block goes here) -->
+</body>
 
 <script>
-/* -------------------------------------------------
-   STATE
-   ------------------------------------------------- */
-let currentQuestion = null;
-let answers       = {};
-let questions     = [];
-// NEW: Track the ID of the test currently being taken
-let currentTestId = null; 
+/* ==========================================================================
+   1. GLOBAL UTILITIES (Defined at top to fix ReferenceError)
+   ========================================================================== */
+function linkEnterToNext(inputId, nextId) {
+    const i = document.getElementById(inputId);
+    const n = document.getElementById(nextId);
+    if (i && n) {
+        i.addEventListener('keyup', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // If next is input, focus; if button, click
+                if (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA') n.focus();
+                else n.click();
+            }
+        });
+    }
+}
 
-/* -------------------------------------------------
-   PAGE NAVIGATION
-   ------------------------------------------------- */
+/* ==========================================================================
+   2. GLOBAL STATE
+   ========================================================================== */
+console.log("Script Initialized");
+let currentQuestion = 0;
+let answers = {};
+let questions = [];
+let currentTestId = null;
+let currentTestName = '';
+let historyDataCache = [];
+let currentHistoryItem = null;
+
+/* ==========================================================================
+   3. NAVIGATION
+   ========================================================================== */
 function showPage(page, updateHistory = true) {
+    console.log("Navigating to:", page);
     document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+
     const id = {
         home: 'homePage', 'user-info': 'userInfoPage',
         'skills-assessment': 'skillsAssessmentPage',
-        results: 'resultsPage', otp: 'otpPage', profile: 'profilePage', review: 'reviewPage',
-        'tests-menu': 'testsMenuPage'
+        results: 'resultsPage', otp: 'otpPage',
+        profile: 'profilePage', review: 'reviewPage',
+        'tests-menu': 'testsMenuPage', history: 'historyPage',
+        'history-review': 'historyReviewPage',
+        'subscription': 'subscriptionPage' 
     }[page];
+
     const el = document.getElementById(id);
     if (el) el.classList.remove('hidden');
-    else { console.error('Page not found:', page); return; }
-    
-    updateProfileButtonVisibility(page);
+    else { console.error("CRITICAL ERROR: Page element not found for ID:", id); return; }
 
-    if (updateHistory) {
-        history.pushState({ page: page }, '', `#${page}`);
+    const profileBtn = document.getElementById('profile-button');
+    if (profileBtn) {
+        profileBtn.style.display = (page === 'home' || page === 'profile') ? 'flex' : 'none';
     }
+
+    if (updateHistory) history.pushState({ page: page }, '', `#${page}`);
 }
 
 function navigateTo(page) { showPage(page); }
 
 window.onpopstate = function(event) {
-    if (event.state && event.state.page) {
-        showPage(event.state.page, false);
-    } else {
-        showPage('{{ initial_page|default:"user-info" }}', false);
-    }
+    if (event.state && event.state.page) showPage(event.state.page, false);
+    else showPage('{{ initial_page|default:"user-info" }}', false);
 };
 
-/* -------------------------------------------------
-   UI HELPERS
-   ------------------------------------------------- */
-function updateProfileButtonVisibility(page) {
-    const profileButton = document.getElementById('profile-button');
-    if (!profileButton) return;
-    if (page === 'home' || page === 'profile') {
-        profileButton.style.display = 'flex';
-    } else {
-        profileButton.style.display = 'none';
-    }
-}
-
-/* -------------------------------------------------
-   OTP / LOGIN FLOW
-   ------------------------------------------------- */
+/* ==========================================================================
+   4. AUTHENTICATION
+   ========================================================================== */
 function requestOTP() {
     const phone = document.getElementById('userPhone').value.trim();
     const fullName = document.getElementById('regFullName').value.trim();
@@ -675,43 +873,40 @@ function verifyOTP() {
     });
 }
 
-/* -------------------------------------------------
-   PROFILE PANEL
-   ------------------------------------------------- */
+function logout() {
+    if (confirm("آیا برای خروج از حساب کاربری خود اطمینان دارید؟\n\nتوجه: برای ورود مجدد، باید نام و شماره تماس خود را مجدداً وارد کنید.")) {
+        window.location.href = '/logout/';
+    }
+}
+
 function showProfilePanel() {
     const profilePage = document.getElementById('profilePage');
     if (!profilePage.classList.contains('hidden')) { showPage('home'); return; }
     fetch('/api/profile/').then(r => r.json()).then(data => {
         if (data.status === 'success') {
-            const profile = data.profile;
-            document.getElementById('profilePhone').value = profile.phone_number;
-            document.getElementById('profileFullName').value = profile.full_name;
-            document.getElementById('profileAge').value = profile.age;
-            document.getElementById('profileAddress').value = profile.address;
-            document.getElementById('profileAbout').value = profile.about_me;
-            
+            const p = data.profile;
+            document.getElementById('profilePhone').value = p.phone_number;
+            document.getElementById('profileFullName').value = p.full_name;
+            document.getElementById('profileAge').value = p.age;
+            document.getElementById('profileAddress').value = p.address;
+            document.getElementById('profileAbout').value = p.about_me;
             const saveBtn = document.getElementById('saveProfileBtn');
-            saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'not-allowed';
-            const form = document.getElementById('profileForm');
-            const enableButton = () => {
+            saveBtn.disabled = true; saveBtn.style.opacity = '0.5';
+            document.getElementById('profileForm').addEventListener('input', () => {
                 saveBtn.disabled = false; saveBtn.style.opacity = '1'; saveBtn.style.cursor = 'pointer';
-                form.removeEventListener('input', enableButton);
-            };
-            form.addEventListener('input', enableButton);
-            
-            // Enter key logic for profile
+            }, { once: true });
+            // Enter Keys for Profile
             linkEnterToNext('profileFullName', 'profileAge');
             linkEnterToNext('profileAge', 'profileAddress');
             linkEnterToNext('profileAddress', 'profileAbout');
             linkEnterToNext('profileAbout', 'saveProfileBtn');
-
             showPage('profile');
         } else { alert('خطا در بارگذاری پروفایل.'); }
     });
 }
 
 function saveProfile() {
-    const profileData = {
+    const data = {
         full_name: document.getElementById('profileFullName').value,
         age: document.getElementById('profileAge').value,
         address: document.getElementById('profileAddress').value,
@@ -721,132 +916,101 @@ function saveProfile() {
     fetch('/api/profile/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-        body: JSON.stringify(profileData)
-    }).then(r => r.json()).then(data => {
-        if (data.status === 'success') { alert('پروفایل شما با موفقیت ذخیره شد.'); showPage('home'); }
-        else { alert('خطا در ذخیره پروفایل.'); }
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(d => {
+        if (d.status === 'success') { alert('پروفایل ذخیره شد.'); showPage('home'); }
+        else { alert('خطا در ذخیره.'); }
     });
 }
 
-function logout() {
-    const confirmationMessage = "آیا برای خروج از حساب کاربری خود اطمینان دارید؟\n\nتوجه: برای ورود مجدد، باید نام و شماره تماس خود را مجدداً وارد کنید.";
-    if (confirm(confirmationMessage)) { window.location.href = '/logout/'; }
+function redeemCode() {
+    const code = document.getElementById('promoCodeInput').value;
+    if (!code) return;
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/redeem-code/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ code: code })
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') { alert("تبریک! حساب شما ارتقا یافت."); window.location.reload(); }
+        else { alert(data.message); }
+    });
 }
 
-/* -------------------------------------------------
-   ASSESSMENT LOGIC (UPDATED for New Architecture)
-   ------------------------------------------------- */
-function loadQuestions(testId = null) {
-    // If a testID is passed, update the global currentTestId
-    if (testId) {
-        currentTestId = testId;
-    }
+/* ==========================================================================
+   5. TESTS & EXECUTION
+   ========================================================================== */
+function loadTestsMenu() {
+    showPage('tests-menu');
+    const container = document.getElementById('testsGrid');
+    container.innerHTML = '<div class="loading-container"><div class="spinner"></div></div>';
 
-    if (!currentTestId) {
-        console.error("No test ID found to load.");
-        return;
-    }
-
-    currentQuestion = 0;
-    // THE FIX: Use the new URL structure with the Test ID
-    fetch(`/api/tests/${currentTestId}/questions/`)
+    fetch('/api/tests/list/')
         .then(r => r.json())
         .then(data => {
-            questions = data;
-            if (questions.length) renderQuestion();
-            else document.getElementById('questionContainer').innerHTML = '<p>سوالی برای نمایش وجود ندارد.</p>';
+            if (data.status === 'success' && data.tests.length > 0) {
+                container.innerHTML = data.tests.map(test => `
+                    <div class="question-card" style="cursor: pointer; transition: transform 0.2s; height: 100%; display: flex; flex-direction: column; justify-content: space-between;" 
+                         onmouseover="this.style.transform='scale(1.02)'" 
+                         onmouseout="this.style.transform='scale(1)'"
+                         onclick="startSpecificTest(${test.id}, '${test.name}')">
+                        <div>
+                            <h3 style="color: hsl(var(--primary)); margin-bottom: 8px;">${test.name}</h3>
+                            <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem; line-height: 1.6;">${test.description || 'سنجش تخصصی مهارت‌ها'}</p>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">شروع آزمون</button>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="question-card" style="grid-column: 1/-1; text-align: center;"><p>فعلاً آزمون تخصصی دیگری موجود نیست.</p></div>';
             }
-        )
+        })
         .catch(err => {
             console.error(err);
-            document.getElementById('questionContainer').innerHTML = '<p style="color:red;">خطا در بارگذاری سوالات.</p>';
+            container.innerHTML = '<p style="color: red;">خطا در بارگذاری آزمون‌ها.</p>';
         });
 }
 
-function submitAnswers(retryCount = 0) {
-    // Safety check: Ensure we know which test we are submitting
-    if (!currentTestId) {
-        alert("خطا: شناسه آزمون یافت نشد. لطفا صفحه را رفرش کنید.");
-        return;
+function startSpecificTest(testId, testName = 'آزمون') {
+    const startTestId = "{{ start_test_id|default:'' }}"; 
+    const isPremium = "{{ user.is_premium|yesno:'true,false' }}" === "true"; 
+    if (testId.toString() !== startTestId && !isPremium) {
+        showPage('subscription'); return;
     }
-
-    showPage('results');
-    const resultsContainer = document.getElementById('resultsContent');
-    
-    resultsContainer.innerHTML = `
-        <div class="loading-container">
-            <div class="spinner"></div>
-            <h3 style="margin-bottom: 10px;">در حال تحلیل هوشمند پاسخ‌ها...</h3>
-            <p style="color: hsl(var(--muted-foreground));">لطفاً شکیبا باشید، هوش مصنوعی در حال بررسی دقیق پروفایل شماست.</p>
-            ${retryCount > 0 ? `<p style="font-size: 0.9rem; color: orange;">تلاش مجدد (${retryCount}/3)...</p>` : ''}
-        </div>
-    `;
-
-    const submissionData = {
-        user_name: answers.user_name,
-        user_phone: answers.user_phone
-    };
-    
-    questions.forEach(q => {
-        if (answers[q.id] !== undefined) {
-            submissionData[q.id] = answers[q.id];
-        }
-    });
-
-    const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (!csrfTokenInput) {
-        resultsContainer.innerHTML = '<p style="color: red; text-align: center;">خطای امنیتی: توکن یافت نشد. لطفاً صفحه را رفرش کنید.</p>';
-        return;
-    }
-
-    // --- THE FIX IS HERE ---
-    // We must use backticks (`) to insert the currentTestId variable
-    fetch(`/api/tests/${currentTestId}/submit/`, { 
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfTokenInput.value
-        },
-        body: JSON.stringify(submissionData)
-    })
-    .then(r => {
-        if (!r.ok) { throw new Error(`Server Error: ${r.status}`); }
-        return r.json();
-    })
-    .then(data => {
-        if (data.status === 'success') {
-            showResults(submissionData, data.analysis);
-        } else {
-            throw new Error(data.message || "خطا در پردازش");
-        }
-    })
-    .catch(err => {
-        console.error("Attempt failed:", err);
-        
-        if (retryCount < 3) {
-            setTimeout(() => submitAnswers(retryCount + 1), 2000);
-        } else {
-            resultsContainer.innerHTML = `
-                <div class="results-card" style="text-align: center;">
-                    <h3 style="color: red; margin-bottom: 16px;">خطا در دریافت تحلیل</h3>
-                    <p>متاسفانه ارتباط با هوش مصنوعی برقرار نشد.</p>
-                    <p style="font-size: 0.9rem; color: gray; margin-bottom: 20px;">${err.message}</p>
-                    <button class="btn btn-primary" onclick="submitAnswers()">تلاش دستی مجدد</button>
-                </div>
-            `;
-        }
-    });
+    currentTestId = testId;
+    currentTestName = testName;
+    answers = {};
+    const saved = localStorage.getItem(`draft_answers_${testId}`);
+    if (saved) { try { answers = JSON.parse(saved); } catch(e) { answers = {}; } }
+    loadQuestions(testId);
+    showPage('skills-assessment');
 }
 
+function loadQuestions(testId) {
+    currentQuestion = 0;
+    console.log("Fetching questions for Test ID:", testId);
+    fetch(`/api/tests/${testId}/questions/`).then(r => r.json()).then(data => {
+        console.log("Questions API Response:", data);
+        questions = data;
+        if (questions.length > 0) {
+            showPage('skills-assessment');
+            renderQuestion();
+        } else { document.getElementById('questionContainer').innerHTML = '<p>سوالی یافت نشد.</p>'; }
+    }).catch(err => console.error(err));
+}
+
+// --- RENDER ---
 function renderQuestion() {
     const q = questions[currentQuestion];
     const container = document.getElementById('questionContainer');
     if (!container) return;
     const progress = ((currentQuestion + 1) / questions.length) * 100;
     document.getElementById('progressBar').style.width = `${progress}%`;
-    
-    let html = `<div class="question-card"><p style="color:hsl(var(--muted-foreground));margin-bottom:8px;">سوال ${currentQuestion + 1} از ${questions.length}</p><h2 class="question-title">${q.question}</h2>`;
-    
+
+    let html = `<div class="question-card">
+        <p style="color:hsl(var(--muted-foreground));margin-bottom:8px;">سوال ${currentQuestion + 1} از ${questions.length}</p>
+        <h2 class="question-title">${q.question}</h2>`;
+
     if (q.type === 'multiple') {
         html += '<div>';
         q.options.forEach(opt => {
@@ -857,245 +1021,355 @@ function renderQuestion() {
         html += '</div>';
     } else if (q.type === 'slider') {
         const val = answers[q.id] ?? 5;
-        html += `<div class="slider-container"><input type="range" class="slider" min="${q.min}" max="${q.max}" value="${val}" oninput="updateSlider(${q.id}, this)"><div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:600;"><span>${q.min}</span><span id="sliderValue-${q.id}">${val}</span><span>${q.max}</span></div><div style="display:flex;justify-content:space-between;font-size:.85rem;color:hsl(var(--muted-foreground));padding:0 4px;"><span>کاملا مخالفم</span><span>کاملا موافقم</span></div></div>`;
+        html += `<div class="slider-container"><input type="range" class="slider" min="${q.min}" max="${q.max}" value="${val}" oninput="updateSlider(${q.id}, this)"><div style="display:flex;justify-content:space-between;font-weight:600;margin-top:8px;"><span>${q.min}</span><span id="sliderValue-${q.id}">${val}</span><span>${q.max}</span></div><div style="display:flex;justify-content:space-between;font-size:.85rem;padding:0 4px;"><span>مخالفم</span><span>موافقم</span></div></div>`;
     } else if (q.type === 'text') {
         const val = answers[q.id] ?? '';
-        // Added oninput back for real-time updates
-        html += `<input type="text" id="textAnswerInput" class="input-field" value="${val}" oninput="updateText(${q.id}, this.value)" placeholder="پاسخ خود را بنویسید...">`;
+        html += `<input type="text" id="textAnswerInput" class="input-field" value="${val}" oninput="updateText(${q.id}, this.value)" placeholder="...">`;
     }
     html += '</div>';
     container.innerHTML = html;
-    
-    if (q.type === 'slider') {
-        const slider = container.querySelector('.slider');
-        updateSliderFill(slider);
-    }
-    
-    // --- KEYBOARD LISTENERS (Enter Key) ---
-    // Clear previous listeners specifically for questions
-    document.onkeyup = null; 
 
-    if (q.type === 'text') {
-        // For text, we link the input to the Next button
-        linkEnterToNext('textAnswerInput', 'nextBtn');
-    } else {
-        // For sliders/multiple choice, global enter clicks Next
+    if (q.type === 'slider') updateSliderFill(container.querySelector('.slider'));
+
+    document.onkeyup = null;
+    if (q.type === 'text') linkEnterToNext('textAnswerInput', 'nextBtn');
+    else {
         document.onkeyup = function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                document.getElementById('nextBtn').click();
-            }
+            if (event.key === 'Enter') { event.preventDefault(); document.getElementById('nextBtn').click(); }
         };
     }
-
     document.getElementById('prevBtn').disabled = currentQuestion === 0;
     document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'مشاهده نتایج' : 'بعدی';
 }
-function loadTestsMenu() {
-    showPage('tests-menu');
-    const container = document.getElementById('testsGrid');
-    container.innerHTML = '<p>در حال بارگذاری...</p>';
 
-    fetch('/api/tests/list/')
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'success' && data.tests.length > 0) {
-                container.innerHTML = data.tests.map(test => `
-                    <div class="question-card" style="cursor: pointer; transition: transform 0.2s;" 
-                         onclick="startSpecificTest(${test.id})">
-                        <h3 style="color: hsl(var(--primary)); margin-bottom: 8px;">${test.name}</h3>
-                        <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem;">${test.description || ''}</p>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">شروع آزمون</button>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p>فعلاً آزمون تخصصی دیگری موجود نیست.</p>';
-            }
-        });
-}
-
-function startSpecificTest(testId) {
-    answers = {}; // Clear previous answers
-    loadQuestions(testId); // Load the specific test
-    showPage('skills-assessment');
-}
-/* -------------------------------------------------
-   ANSWER HANDLERS & HELPERS
-   ------------------------------------------------- */
-function selectOption(id, opt) { answers[id] = opt; renderQuestion(); }
+function selectOption(id, opt) { answers[id] = opt; saveProgress(); renderQuestion(); }
 function updateSlider(id, el) {
-    const val = parseInt(el.value, 10);
+    const val = parseInt(el.value);
     answers[id] = val;
     document.getElementById(`sliderValue-${id}`).textContent = val;
     updateSliderFill(el);
+    saveProgress();
 }
 function updateSliderFill(el) {
-    if (!el) return;
-    const min = +el.min, max = +el.max, val = +el.value;
-    const pct = ((val - min) / (max - min)) * 100;
+    const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
     el.style.setProperty('--track-fill', `${pct}%`);
 }
-function updateText(id, val) { answers[id] = val.trim(); }
+function updateText(id, val) { answers[id] = val.trim(); saveProgress(); }
+function saveProgress() { if (currentTestId) localStorage.setItem(`draft_answers_${currentTestId}`, JSON.stringify(answers)); }
 
 function nextQuestion() {
-    const currentQ = questions[currentQuestion];
-    const currentAnswer = answers[currentQ.id];
-    
-    if (currentAnswer === undefined || currentAnswer === '') {
-        alert("لطفا قبل از ادامه به این سوال پاسخ دهید.");
-        return;
-    }
-
-    if (currentQuestion < questions.length - 1) {
-        currentQuestion++;
-        renderQuestion();
-    } else {
-        showReviewPage();
-    }
+    const q = questions[currentQuestion];
+    const ans = answers[q.id];
+    if (ans === undefined || ans === '') { alert("لطفا پاسخ دهید."); return; }
+    if (currentQuestion < questions.length - 1) { currentQuestion++; renderQuestion(); }
+    else { showReviewPage(); }
 }
 function previousQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
 
 function showReviewPage() {
     showPage('review');
     const container = document.getElementById('reviewContent');
-    if (!container) return;
-    let html = '';
-    questions.forEach(q => {
-        const answer = answers[q.id];
-        const answerText = answer !== undefined ? answer : 'پاسخ داده نشده';
-        html += `<div style="margin-bottom: 20px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 16px;"><p style="font-size: 1.1rem; color: hsl(var(--foreground)); margin-bottom: 8px;">${q.question}</p><p style="font-size: 1rem; font-weight: 600; color: hsl(var(--primary)); background: hsl(var(--secondary)); padding: 8px 12px; border-radius: 6px;">${answerText}</p></div>`;
-    });
-    container.innerHTML = html;
+    container.innerHTML = questions.map(q => `
+        <div class="review-item">
+            <p style="font-size:1rem;font-weight:500;margin-bottom:8px;">${q.question}</p>
+            <div style="background:hsl(var(--secondary));padding:10px;border-radius:8px;color:hsl(var(--primary));">${answers[q.id] || '---'}</div>
+        </div>`).join('');
 }
 function editAnswers() { showPage('skills-assessment'); }
+
+/* ==========================================================================
+   6. SUBMIT & RESULTS (Two-Step with Retry)
+   ========================================================================== */
+function submitAnswers(retryCount = 0) {
+    showPage('results');
+    const resultsContainer = document.getElementById('resultsContent');
+    
+    // Updated Loading Messages (stays longer, stops at final)
+    const messages = [
+        "در حال ارسال پاسخ‌ها...", 
+        "هوش مصنوعی در حال تحلیل...", 
+        "بررسی انطباق شغلی...", 
+        "تدوین نقشه راه..."
+    ];
+    let msgIndex = 0;
+    resultsContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <h3 id="loadingText" style="color:hsl(var(--primary));margin-bottom:10px;">${messages[0]}</h3>
+            <p>لطفاً شکیبا باشید</p>
+        </div>`;
+    
+    // CHANGED: 4000ms (4 seconds) instead of 2500ms, and stops at last message
+    const loadingInterval = setInterval(() => {
+        msgIndex++;
+        if (msgIndex < messages.length) {
+            const el = document.getElementById('loadingText');
+            if(el) el.textContent = messages[msgIndex];
+        } else {
+            // Stop at the last message - don't loop back
+            clearInterval(loadingInterval);
+        }
+    }, 4000); // Changed from 2500 to 4000ms
+
+    const submissionData = { user_info: {}, responses: [] };
+    questions.forEach(q => {
+        if (answers[q.id] !== undefined) {
+            submissionData.responses.push({ question_id: q.id, question_text: q.question, answer: answers[q.id] });
+        }
+    });
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Step 1: Save Draft
+    fetch(`/api/tests/${currentTestId}/save-draft/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify(submissionData)
+    })
+    .then(r => r.json())
+    .then(draftData => {
+        if (draftData.status !== 'success') throw new Error("خطا در ذخیره پاسخ‌ها");
+        localStorage.removeItem(`draft_answers_${currentTestId}`);
+        return performAnalysis(currentTestId, draftData.result_id, submissionData, retryCount, loadingInterval);
+    })
+    .catch(err => {
+        clearInterval(loadingInterval);
+        console.error(err);
+        resultsContainer.innerHTML = `<p style="color:red;text-align:center;">${err.message}</p><button class="btn btn-primary" onclick="submitAnswers()">تلاش مجدد</button>`;
+    });
+}
+
+function performAnalysis(testId, resultId, submissionData, retryCount, intervalId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const resultsContainer = document.getElementById('resultsContent');
+
+    fetch(`/api/tests/${testId}/analyze/${resultId}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+    })
+    .then(r => r.json())
+    .then(data => {
+        clearInterval(intervalId);
+        if (data.status === 'success') {
+            showResults(submissionData, data.analysis);
+        } else {
+            throw new Error(data.message || "خطا در تحلیل");
+        }
+    })
+    .catch(err => {
+        if (retryCount < 2) {
+            setTimeout(() => performAnalysis(testId, resultId, submissionData, retryCount + 1, intervalId), 2000);
+        } else {
+            clearInterval(intervalId);
+            resultsContainer.innerHTML = `
+                <div class="results-card" style="text-align: center;">
+                    <h3 style="color: orange;">تحلیل انجام نشد</h3>
+                    <p>پاسخ‌های شما ذخیره شد اما ارتباط با هوش مصنوعی برقرار نشد.</p>
+                    <p style="font-size: 0.9rem; color: gray;">${err.message}</p>
+                    <button class="btn btn-primary" onclick="performAnalysis(${testId}, ${resultId}, null, 0)">تلاش مجدد</button>
+                    <button class="btn btn-secondary" style="margin-top:10px;" onclick="showPage('home')">بازگشت به خانه</button>
+                </div>`;
+        }
+    });
+}
 
 function showResults(userData, analysis) {
     const container = document.getElementById('resultsContent');
     if (!container) return;
 
-    const userName = "{{ user.full_name|default:'کاربر مهمان' }}";
-    document.querySelector('#resultsPage .results-header p').textContent = 
-        `${userName} عزیز، تحلیل اختصاصی شما آماده است.`;
+    const userName = "{{ user.full_name|default:'کاربر' }}";
+    const title = currentTestName || "نتیجه آزمون";
+    document.querySelector('#resultsPage .results-header h1').textContent = `نتیجه: ${title}`;
+    document.querySelector('#resultsPage .results-header p').textContent = `${userName} عزیز، تحلیل اختصاصی شما آماده است.`;
 
-    // SAFE GUARDS: Ensure arrays exist to prevent "map of undefined" error
-    const jobs = analysis.recommended_jobs || [];
-    const devPath = analysis.development_path || analysis.development_points || []; 
-    const mbti = analysis.mbti || { type: "نامشخص", description: "اطلاعات کافی نیست" };
-    const domain = analysis.dominant_domain || "نامشخص";
-    const skills = analysis.skills_analysis || "تحلیل مهارت در دسترس نیست";
+    let html = '';
 
-    let html = `
-        <!-- 1. MBTI & Domain (New Section) -->
-        <div class="results-card" style="background: linear-gradient(135deg, hsl(var(--secondary)) 0%, #fff 100%);">
-            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
-                <div style="flex: 1; min-width: 200px;">
-                    <h2 style="color: hsl(var(--primary)); font-size: 2rem; margin-bottom: 8px;">${mbti.type}</h2>
-                    <p style="color: hsl(var(--foreground)); font-weight: 600;">${domain}</p>
-                </div>
-                <div style="flex: 2; min-width: 280px; border-right: 2px solid hsl(var(--border)); padding-right: 20px;">
-                    <p style="color: hsl(var(--muted-foreground)); line-height: 1.7;">${mbti.description}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. Skills Analysis -->
-        <div class="results-card">
-            <h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">تحلیل مهارت‌ها</h2>
-            <p style="line-height: 1.8;">${skills}</p>
-        </div>
-
-        <!-- 3. Recommended Jobs (With Dynamic Buttons) -->
-        <div class="results-card">
-            <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">شغل‌های پیشنهادی</h2>
-            ${jobs.map((career, index) => `
-                <div class="career-item" style="margin-bottom: 16px; padding: 20px; border: 1px solid hsl(var(--border)); border-radius: 12px; background: ${index === 0 ? 'hsl(var(--secondary))' : 'white'};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <div class="career-title" style="font-weight: bold; font-size: 1.1rem; color: #263b80;">${career.job}</div>
-                        ${index === 0 ? '<span style="background:#263b80; color:white; padding:2px 10px; border-radius:12px; font-size:0.8rem;">پیشنهاد اصلی</span>' : ''}
+    if (!analysis) {
+        html = '<div class="results-card"><p>اطلاعات موجود نیست.</p></div>';
+    } else if (typeof analysis === 'string') {
+        html = `<div class="results-card"><p>${analysis}</p></div>`;
+    } else {
+        // 1. MBTI / General (Gradient Card)
+        if (analysis.mbti || analysis.analysis) {
+            html += `
+            <div class="results-card" style="background: linear-gradient(135deg, hsl(var(--secondary)) 0%, #fff 100%); border: 1px solid hsl(var(--primary));">
+                <h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">تحلیل کلی</h2>
+                ${analysis.mbti ? `
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                        <h3 style="font-size: 2rem; color: hsl(var(--foreground));">${analysis.mbti.type || ''}</h3>
+                        <span style="background:hsl(var(--primary)); color:white; padding:4px 12px; border-radius:20px; font-size:0.8rem;">${analysis.dominant_domain || 'General'}</span>
                     </div>
-                    <p style="color: hsl(var(--foreground)); margin-bottom: 12px;">${career.reason}</p>
-                    
-                    ${career.test_id ? `
-                        <button class="btn btn-primary" style="font-size: 0.9rem; padding: 8px 16px;" 
-                                onclick="startSpecificTest(${career.test_id})">
-                            سنجش سطح تخصصی
-                        </button>
-                    ` : ''}
-                </div>
-            `).join('') || '<p>شغلی یافت نشد.</p>'}
-        </div>
+                    <p style="color: hsl(var(--muted-foreground)); margin-top:10px; line-height:1.7;">${analysis.mbti.description || ''}</p>
+                ` : `<p style="line-height:1.7;">${analysis.analysis}</p>`}
+            </div>`;
+        }
 
-        <!-- 4. Development Path -->
-        <div class="results-card">
-            <h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">مسیر رشد و یادگیری</h2>
-            <ul style="list-style-type: none; padding: 0;">
-                ${devPath.map(step => `
-                    <li style="margin-bottom: 12px; padding: 12px; background: #fff; border-radius: 8px; border-right: 4px solid hsl(var(--primary)); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        ${step}
-                    </li>
-                `).join('') || '<p>اطلاعات مسیر رشد موجود نیست.</p>'}
-            </ul>
-        </div>
-    `;
+        // 2. Recommended Jobs (With CTA Buttons)
+        if (analysis.recommended_jobs && analysis.recommended_jobs.length > 0) {
+            html += `
+            <div class="results-card">
+                <h2 style="color: hsl(var(--primary)); margin-bottom: 24px;">شغل‌های پیشنهادی</h2>
+                ${analysis.recommended_jobs.map((career, index) => `
+                    <div class="career-item" style="margin-bottom: 16px; padding: 20px; border: 1px solid hsl(var(--border)); border-radius: 12px; position: relative; overflow: hidden;">
+                        ${index === 0 ? '<div style="position:absolute; top:0; left:0; background:hsl(var(--primary)); color:white; padding:4px 12px; font-size:0.7rem; border-bottom-right-radius:12px;">پیشنهاد اصلی</div>' : ''}
+                        
+                        <div class="career-title" style="font-weight: bold; font-size: 1.2rem; color: #263b80; margin-top:10px;">${career.job}</div>
+                        <p style="color: hsl(var(--foreground)); margin-bottom: 16px; font-size: 0.95rem;">${career.reason}</p>
+                        
+                        ${career.test_id ? `
+                            <button class="btn btn-primary" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px;" 
+                                    onclick="startSpecificTest(${career.test_id}, '${career.job}')">
+                                <span>سنجش سطح تخصصی این مهارت</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>`;
+        }
 
+        // 3. Development Path (Fancy List)
+        const devPath = analysis.development_path || analysis.development_points;
+        if (devPath && devPath.length > 0) {
+            html += `
+            <div class="results-card">
+                <h2 style="color: hsl(var(--primary)); margin-bottom: 16px;">مسیر رشد و یادگیری</h2>
+                <ul style="list-style-type: none; padding: 0;">
+                    ${devPath.map(step => `
+                        <li style="margin-bottom: 12px; padding: 16px; background: #fff; border-radius: 8px; border-right: 4px solid hsl(var(--primary)); box-shadow: 0 2px 8px rgba(0,0,0,0.05); display:flex; align-items:center;">
+                            <span style="color:hsl(var(--primary)); font-size:1.2rem; margin-left:10px;">•</span>
+                            ${step}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>`;
+        }
+    }
     container.innerHTML = html;
 }
 
-function linkEnterToNext(currentInputId, nextElementId) {
-    const currentInput = document.getElementById(currentInputId);
-    const nextElement = document.getElementById(nextElementId);
-    if (!currentInput || !nextElement) return;
-    currentInput.addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            if (nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA') { nextElement.focus(); } 
-            else { nextElement.click(); }
-        }
-    });
+/* ==========================================================================
+   7. HISTORY
+   ========================================================================== */
+function loadHistory() {
+    showPage('history');
+    const container = document.getElementById('historyList');
+    container.innerHTML = '<div class="loading-container"><div class="spinner"></div></div>';
+
+    fetch('/api/history/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success' && data.history.length > 0) {
+                historyDataCache = data.history;
+                container.innerHTML = data.history.map((item, index) => {
+                    const hasAnalysis = item.analysis && Object.keys(item.analysis).length > 0;
+                    const statusBadge = hasAnalysis 
+                        ? '<span style="font-size:0.8rem; padding:4px 10px; border-radius:12px; background:#dcfce7; color:#166534;">تکمیل شده</span>' 
+                        : '<span style="font-size:0.8rem; padding:4px 10px; border-radius:12px; background:#fff7ed; color:#9a3412;">در انتظار تحلیل</span>';
+
+                    return `
+                    <div class="question-card" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-right: 4px solid hsl(var(--primary));" 
+                         onclick="openHistoryItem(${index})">
+                        <div>
+                            <h3 style="font-size: 1.1rem; color: hsl(var(--primary)); margin-bottom: 4px;">${item.test_name}</h3>
+                            <div style="font-size: 0.85rem; color: hsl(var(--muted-foreground));">
+                                <span>📅 ${item.date}</span> | <span>⏰ ${item.time}</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                            ${statusBadge}
+                            <button class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">مشاهده</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                container.innerHTML = '<div class="question-card" style="text-align:center;"><p>هنوز آزمونی ثبت نکرده‌اید.</p></div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.innerHTML = '<p style="color:red; text-align:center;">خطا در دریافت تاریخچه.</p>';
+        });
 }
 
-function setupEnterKey(inputId, buttonId) {
-    const input = document.getElementById(inputId);
-    const button = document.getElementById(buttonId);
-    if (!input || !button) return;
-    input.addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            button.click();
-        }
-    });
+function openHistoryItem(index) {
+    const item = historyDataCache[index];
+    if (!item) return;
+    currentHistoryItem = item; // Save to global variable
+
+    showPage('history-review');
+    document.getElementById('historyMeta').textContent = `آزمون: ${item.test_name} | تاریخ: ${item.date}`;
+    
+    // Render Answers
+    const responses = item.answers.responses || [];
+    document.getElementById('historyReviewContent').innerHTML = responses.map(r => `
+        <div class="review-item">
+            <p style="font-weight:500; margin-bottom:5px;">${r.question_text}</p>
+            <div style="background:hsl(var(--secondary)); padding:8px; border-radius:6px; color:hsl(var(--primary));">
+                ${r.answer}
+            </div>
+        </div>`).join('') || '<p>جزئیات موجود نیست.</p>';
+
+    // THE FIX: Handle the Analysis Button
+    const btn = document.getElementById('viewAnalysisBtn');
+    
+    if (item.analysis) {
+        btn.style.display = 'inline-block';
+        btn.textContent = "مشاهده تحلیل هوش مصنوعی";
+        
+        // DIRECTLY ASSIGN THE FUNCTION HERE
+        btn.onclick = function() {
+            // 1. Switch Page
+            showPage('results');
+            // 2. Render Data
+            showResults(item.answers, item.analysis);
+            
+            // 3. Fix Back Button behavior for History context
+            const backBtn = document.querySelector('#resultsPage .action-buttons .btn-secondary');
+            if(backBtn) {
+                backBtn.onclick = function() { showPage('history-review'); };
+                backBtn.textContent = "بازگشت به مرور";
+            }
+        };
+    } else {
+        btn.style.display = 'none';
+    }
 }
 
-/* -------------------------------------------------
-   INITIALISE
-   ------------------------------------------------- */
+/* ==========================================================================
+   8. INIT
+   ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const initialPage = '{{ initial_page|default:"user-info" }}';
     const isAuthenticated = {{ is_authenticated|yesno:"true,false" }};
-    // This gets the ID of the primary test from the backend
-    const startTestId = "{{ start_test_id|default:'' }}"; 
+    const startTestId = "{{ start_test_id|default:'' }}";
 
-    // 1. Show the correct page on load
-    showPage(initialPage, false);
-    history.replaceState({ page: initialPage }, '', `#${initialPage}`);
+    // Smart Refresh
+    let targetPage = initialPage;
+    if (isAuthenticated) {
+        const hash = window.location.hash.substring(1);
+        if (hash && ['home','profile','history','tests-menu','skills-assessment'].includes(hash)) targetPage = hash;
+    }
+    showPage(targetPage, false);
 
-    // 2. If logged in, update the "Start Assessment" button
-    if (isAuthenticated && startTestId) {
-        const startBtn = document.getElementById('startPrimaryBtn');
-        if (startBtn) {
-            // Update the button to start the specific primary test
-            startBtn.setAttribute('onclick', `startSpecificTest(${startTestId})`);
-        }
+    // Resume Test Logic
+    if (targetPage === 'skills-assessment' && isAuthenticated) {
+        const activeId = localStorage.getItem('active_test_id');
+        if (activeId) loadQuestions(activeId);
+        else if (startTestId) startSpecificTest(startTestId, 'استعدادیابی');
+        else showPage('home');
     }
 
-    // 3. Setup Enter Keys
-    setupEnterKey('regFullName', 'requestOtpBtn');
-    setupEnterKey('userPhone', 'requestOtpBtn');
-    setupEnterKey('otpCode', 'verifyOtpBtn');
-});
+    // Primary Button Logic
+    if (isAuthenticated && startTestId) {
+        const btn = document.getElementById('startPrimaryBtn');
+        if (btn) btn.onclick = () => startSpecificTest(startTestId, 'استعدادیابی');
+    }
 
-function downloadResults() { alert('این قابلیت در حال توسعه است.'); }
-function shareResults() { alert('این قابلیت در حال توسعه است.'); }
+    linkEnterToNext('regFullName', 'userPhone');
+    linkEnterToNext('userPhone', 'requestOtpBtn');
+    linkEnterToNext('otpCode', 'verifyOtpBtn');
+});
 </script>
 </body>
 </html>

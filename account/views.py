@@ -123,3 +123,33 @@ def profile_api_view(request):
 def logout_view(request):
     logout(request)
     return redirect('assessment_home') # Redirect to the homepage after logout
+
+
+@login_required
+def subscription_status_api(request):
+    if request.method == 'POST':
+        # MOCK PAYMENT: Just set them to premium immediately
+        request.user.is_premium = True
+        request.user.save()
+        return JsonResponse({'status': 'success', 'message': 'Account upgraded!'})
+    
+    return JsonResponse({'status': 'success', 'is_premium': request.user.is_premium})
+
+
+@login_required
+def redeem_code_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('code', '').strip().upper()
+            
+            # Define your mock codes here
+            if code in ['KAFNA_VIP', 'TEST_PREMIUM']: 
+                request.user.is_premium = True
+                request.user.save()
+                return JsonResponse({'status': 'success', 'message': 'Account upgraded to Premium!'})
+            
+            return JsonResponse({'status': 'error', 'message': 'کد وارد شده نامعتبر است.'})
+        except:
+            return JsonResponse({'status': 'error', 'message': 'Error processing request.'})
+    return JsonResponse({'status': 'error'}, status=405)
