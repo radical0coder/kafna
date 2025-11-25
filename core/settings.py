@@ -82,7 +82,7 @@ if config('DATABASE') == 'SQLITE':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-elif config('DATABASE') == 'MYSQL':
+elif config('DATABASE') == 'POSTGRESQL':
     DATABASES = {
         'default': {
             'ENGINE': config('DATABASE_ENGINE'),

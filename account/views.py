@@ -10,6 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import logout
 from django.shortcuts import redirect
+from django.db.models import Count
+from django.db.models.functions import Coalesce
 
 
 
@@ -153,3 +155,37 @@ def redeem_code_view(request):
         except:
             return JsonResponse({'status': 'error', 'message': 'Error processing request.'})
     return JsonResponse({'status': 'error'}, status=405)
+
+
+@login_required
+def get_user_rank_api(request):
+    """
+    Calculates the rank of the current user based on the number of assessments taken.
+    """
+    user = request.user
+    
+    # 1. Annotate all users with the count of their assessments
+    # 'Coalesce' ensures that users with zero assessments are counted as 0 instead of None
+    all_users_with_counts = CustomUser.objects.annotate(
+        assessment_count=Coalesce(Count('assessments'), 0)
+    )
+    
+    # 2. Get the current user's assessment count
+    try:
+        current_user_data = all_users_with_counts.get(pk=user.pk)
+        current_user_assessment_count = current_user_data.assessment_count
+    except CustomUser.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'User not found.'}, status=404)
+
+    # 3. Calculate the rank by counting how many users have MORE assessments
+    rank = all_users_with_counts.filter(assessment_count__gt=current_user_assessment_count).count() + 1
+    
+    # Get the total number of users for context
+    total_users = all_users_with_counts.count()
+
+    return JsonResponse({
+        'status': 'success',
+        'rank': rank,
+        'total_users': total_users,
+        'assessment_count': current_user_assessment_count,
+    })

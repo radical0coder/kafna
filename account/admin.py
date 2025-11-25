@@ -26,16 +26,16 @@ class AssessmentResultInline(admin.TabularInline):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('phone_number', 'full_name', 'get_assessment_count', 'is_staff')
+    list_display = ('phone_number', 'full_name', 'get_assessment_count', 'is_staff','is_premium')
     search_fields = ('phone_number',)
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    list_filter = ('is_staff', 'is_superuser', 'is_active','is_premium', 'groups')
     inlines = [AssessmentResultInline]
     
     # This configures the fields shown when editing a user
     fieldsets = (
         (None, {'fields': ('phone_number', 'password')}),
         ('Personal info', {'fields': ('full_name', 'address', 'age', 'about_me')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff','is_premium', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     # This configures the fields shown when creating a new user
