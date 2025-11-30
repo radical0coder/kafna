@@ -531,17 +531,86 @@
                 display: inline-block;
                 margin-left: 5px;
             }
+            /* --- SIDEBAR (Balanced Theme) --- */
+.sidebar {
+    position: fixed; top: 0; right: 0; width: 280px; height: 100%;
+    background: #ffffff; /* Clean White Body */
+    color: #333;
+    z-index: 2001;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    display: flex; flex-direction: column;
+}
+.sidebar.hidden { transform: translateX(100%); }
+
+/* Vibrant Header */
+.sidebar-header {
+    padding: 25px 20px;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+    color: white;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.close-btn { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; opacity: 0.9; }
+
+/* Clean Items */
+.sidebar-content { padding: 15px 0; overflow-y: auto; }
+.sidebar-item {
+    padding: 14px 24px; cursor: pointer; display: flex; align-items: center; gap: 14px;
+    transition: all 0.2s; font-size: 1rem; color: #555;
+    border-left: 4px solid transparent; /* Marker for hover */
+}
+.sidebar-item:hover {
+    background: hsl(var(--secondary));
+    color: hsl(var(--primary));
+    border-left-color: hsl(var(--primary)); /* Purple accent on hover */
+}
+.sidebar-item span { font-size: 1.2rem; } /* Bigger Icons */
+
+/* --- MENU BUTTON (Fixed & Smart) --- */
+#menu-button {
+    position: fixed; top: 20px; left: 20px; /* Moved to LEFT to separate from Profile */
+    width: 48px; height: 48px;
+    background: white; border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: none; /* Hidden by default, JS will show it */
+    align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1000;
+    color: hsl(var(--primary));
+    transition: transform 0.2s;
+}
+#menu-button:hover { transform: scale(1.1); 
+}
+/* Success Modal Styles */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); z-index: 3000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+
+.success-card {
+    background: white; padding: 40px 30px; border-radius: 20px;
+    text-align: center; max-width: 400px; width: 90%;
+    transform: scale(0.8); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+.modal-overlay.active .success-card { transform: scale(1); }
+
+.success-icon {
+    width: 80px; height: 80px; margin: 0 auto 20px;
+    background: #dcfce7; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #16a34a;
+}
+.success-icon svg { width: 40px; height: 40px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <!-- Profile Button (Visible only when logged in) -->
-    {% if user.is_authenticated %}
-        <div id="profile-button" onclick="showProfilePanel()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </div>
-    {% endif %}
 
     <!-- Main Content Container -->
     <div id="mainContent" class="main-content">
@@ -563,7 +632,7 @@
                             <h2>آزمون های سطح سنجی</h2>
                             <p>سنجش سطح مهارت در حوزه های مختلف</p>
                         </button>
-                        <button class="home-button" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" onclick="showPage('subscription')">
+                        <button class="home-button" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" onclick="loadSubscriptionPage()">
                             <h2>خرید اشتراک ویژه</h2>
                             <p>دسترسی نامحدود به تمامی آزمون‌ها و تحلیل‌ها</p>
                         </button>
@@ -622,9 +691,12 @@
                 <div class="question-card" id="profileForm">
                     <h2 class="question-title" style="text-align: center; margin-bottom: 32px;">پروفایل شما</h2>
                     
-                    <div id="profileStats" class="profile-stats">
-                        <!-- JavaScript will populate this section -->
-                        <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">بارگذاری...</div></div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="color: #666; font-size: 0.9rem;">وضعیت اشتراک:</span>
+                            <div id="profileSubStatus" style="font-weight: bold; color: hsl(var(--primary)); margin-top: 4px;">--</div>
+                        </div>
+                        <button class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;" onclick="loadSubscriptionPage()">مدیریت اشتراک</button>
                     </div>
 
                     <div style="margin-bottom: 16px;">
@@ -650,7 +722,6 @@
 
                     <div class="nav-buttons" style="justify-content: space-between;">
                         <button class="btn btn-secondary" onclick="logout()">خروج از حساب</button>
-                        <button class="btn btn-secondary" style="background: hsl(var(--primary)); color: white;" onclick="loadHistory()">تاریخچه آزمون‌ها</button>
                         <button id="saveProfileBtn" class="btn btn-primary" onclick="saveProfile()">ذخیره تغییرات</button>
                     </div>
                 </div>
@@ -722,15 +793,13 @@
         <div id="resultsPage" class="page-content hidden">
             <div class="results-container">
                 <div class="results-header">
-                    <h1 class="results-title">نتایج تست استعدادیابی شما</h1>
-                    <p>مسیر شغلی شخصی‌سازی شده بر اساس پاسخ‌های شما</p>
+                    <h1 class="results-title">نتایج تست شما</h1>
                 </div>
                 <div id="resultsContent"></div>
                 <div class="action-buttons">
                     <button class="btn btn-secondary" onclick="navigateTo('home')">بازگشت به خانه</button>
                     <button class="btn btn-primary" onclick="downloadResults()">دانلود نتایج</button>
-                    <button class="btn btn-primary" onclick="shareResults()">اشتراک‌گذاری</button>
-                    <button class="btn btn-primary" onclick="loadTestsMenu()">آزمون‌های تخصصی</button>
+                    <button class="btn btn-primary" onclick="loadTestsMenu()">آزمون‌های سطح‌سنجی</button>
                 </div>
             </div>
         </div>
@@ -770,41 +839,50 @@
             </div>
         </div>
 
-        <!-- 13. subscription plans-->
         <div id="subscriptionPage" class="page-content hidden">
             <div class="results-container" style="max-width: 900px;">
                 <div class="results-header">
                     <h1 class="results-title" style="color: #d97706;">ارتقا به نسخه حرفه‌ای</h1>
                     <p>برای دسترسی به آزمون‌های تخصصی و نقشه‌ی راه دقیق، اشتراک تهیه کنید.</p>
                 </div>
+                
+                <!-- Status Message Container -->
+                <div id="subStatusMessage" style="margin-bottom: 30px;"></div>
 
-                <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 40px;">
-                    <!-- Free Plan -->
-                    <div class="question-card" style="flex: 1; min-width: 300px; border: 1px solid #ddd; opacity: 0.8;">
-                        <h3>نسخه رایگان</h3>
-                        <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۰ تومان</div>
-                        <ul style="list-style: none; line-height: 2;">
-                            <li>✅ تست استعدادیابی اولیه</li>
-                            <li>✅ مشاهده ۳ شغل پیشنهادی</li>
-                            <li>❌ آزمون‌های سطح‌سنجی تخصصی</li>
-                            <li>❌ نقشه راه ۶ ماهه</li>
-                        </ul>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="showPage('home')">بازگشت</button>
+                <!-- THE FIX: Everything is now inside ONE parent div -->
+                <div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                        <!-- Free Plan Card -->
+                        <div class="question-card" id="freePlanCard" style="flex: 1; min-width: 300px; text-align: center;">
+                            <div id="freePlanStatus"></div> 
+                            <h3>نسخه رایگان</h3>
+                            <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۰ تومان</div>
+                            <ul style="list-style: none; line-height: 2; padding: 0;">
+                                <li>✅ تست استعدادیابی اولیه</li>
+                                <li>✅ مشاهده ۳ شغل پیشنهادی</li>
+                                <li>❌ آزمون‌های سطح‌سنجی تخصصی</li>
+                                <li>❌ نقشه راه ۶ ماهه</li>
+                            </ul>
+                            <button id="freePlanBtn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">طرح فعلی</button>
+                        </div>
+
+                        <!-- Pro Plan Card -->
+                        <div class="question-card" id="proPlanCard" style="flex: 1; min-width: 300px; text-align: center; border: 2px solid hsl(var(--primary)); position: relative;">
+                            <div id="proPlanStatus"></div> 
+                            <div style="background: hsl(var(--primary)); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);">پیشنهاد ویژه</div>
+                            <h3 style="color: hsl(var(--primary));">نسخه حرفه‌ای</h3>
+                            <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۹۹,۰۰۰ تومان</div>
+                            <ul style="list-style: none; line-height: 2; padding: 0;">
+                                <li>✅ تست استعدادیابی اولیه</li>
+                                <li>✅ مشاهده ۳ شغل پیشنهادی</li>
+                                <li>✅ <b>دسترسی نامحدود</b> به تمام آزمون‌های تخصصی</li>
+                                <li>✅ دریافت <b>نقشه راه دقیق</b> و منابع یادگیری</li>
+                            </ul>
+                            <button id="proPlanBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="buySubscription()">خرید اشتراک</button>
+                        </div>
                     </div>
 
-                    <!-- Pro Plan -->
-                    <div class="question-card" style="flex: 1; min-width: 300px; border: 2px solid hsl(var(--primary)); transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <div style="background: hsl(var(--primary)); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);">پیشنهاد ویژه</div>
-                        <h3 style="color: hsl(var(--primary));">نسخه حرفه‌ای</h3>
-                        <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۹۹,۰۰۰ تومان</div>
-                        <ul style="list-style: none; line-height: 2;">
-                            <li>✅ تست استعدادیابی اولیه</li>
-                            <li>✅ مشاهده ۳ شغل پیشنهادی</li>
-                            <li>✅ <b>دسترسی نامحدود</b> به تمام آزمون‌های تخصصی</li>
-                            <li>✅ دریافت <b>نقشه راه دقیق</b> و منابع یادگیری</li>
-                        </ul>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="buySubscription()">خرید اشتراک</button>
-                    </div>
+                    <!-- Promo Code Section -->
                     <div style="max-width: 400px; margin: 40px auto; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 12px;">
                         <h3 style="margin-bottom: 16px; font-size: 1.1rem;">کد تخفیف یا کد سازمانی دارید؟</h3>
                         <div style="display: flex; gap: 10px;">
@@ -816,10 +894,61 @@
             </div>
         </div>
 
-    </div> <!-- End of mainContent -->
+        <!--14. sidebar-->
+        <!-- Sidebar Overlay (Click to close) -->
+        <div id="sidebarOverlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar Menu -->
+        <div id="appSidebar" class="sidebar hidden">
+            <div class="sidebar-header">
+                <h2 style="color: white; margin: 0;">کافنا</h2>
+                <button class="close-btn" onclick="toggleSidebar()">×</button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-item" onclick="toggleSidebar(); showPage('home')">
+                    <span>🏠</span> خانه
+                </div>
+                <div class="sidebar-item" onclick="toggleSidebar(); showProfilePanel()">
+                    <span>👤</span> پروفایل من
+                </div>
+                <div class="sidebar-item" onclick="toggleSidebar(); loadHistory()">
+                    <span>📅</span> تاریخچه آزمون‌ها
+                </div>
+                <div class="sidebar-item" onclick="toggleSidebar(); loadTestsMenu()">
+                    <span>📋</span> لیست آزمون‌ها
+                </div>
+                <div class="sidebar-item" onclick="toggleSidebar(); loadSubscriptionPage()">
+                    <span>💎</span> اشتراک ویژه
+                </div>
+                <hr style="border-color: hsla(255, 100%, 100%, 0.1); margin: 10px 0;">
+                <div class="sidebar-item" onclick="logout()" style="color: #fca5a5;">
+                    <span>🚪</span> خروج
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Menu Button (Visible on all pages) -->
+        <div id="menu-button" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </div>
+
+            </div> <!-- End of mainContent -->
 
     <!-- SCRIPTS START HERE -->
     <!-- (Your existing script block goes here) -->
+
+            <!-- Success Modal Overlay -->
+            <div id="successModal" class="modal-overlay hidden">
+                <div class="success-card">
+                    <div class="success-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <h2>تبریک می‌گوییم!</h2>
+                    <p>حساب کاربری شما با موفقیت به نسخه <b>ویژه (Premium)</b> ارتقا یافت.</p>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">اکنون به تمام آزمون‌های تخصصی و تحلیل‌های پیشرفته دسترسی دارید.</p>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="closeSuccessModal()">شروع یادگیری</button>
+                </div>
+            </div>
 </body>
 
 <script>
@@ -874,6 +1003,18 @@ function downloadResults() {
         alert('خطا در دانلود. لطفا دوباره تلاش کنید.');
     });
 }
+function toggleSidebar() {
+    const sidebar = document.getElementById('appSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar.classList.contains('hidden')) {
+        sidebar.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('hidden');
+        overlay.classList.add('hidden');
+    }
+}
 
 /* ==========================================================================
    2. GLOBAL STATE
@@ -908,9 +1049,22 @@ function showPage(page, updateHistory = true) {
     if (el) el.classList.remove('hidden');
     else { console.error("CRITICAL ERROR: Page element not found for ID:", id); return; }
 
+    // --- 1. PROFILE BUTTON VISIBILITY (Top Right) ---
     const profileBtn = document.getElementById('profile-button');
     if (profileBtn) {
-        profileBtn.style.display = (page === 'home' || page === 'profile') ? 'flex' : 'none';
+        // Only show on Home, Profile, or Results (if logged in)
+        profileBtn.style.display = (page === 'home' || page === 'profile' || page === 'results') ? 'flex' : 'none';
+    }
+
+    // --- 2. MENU BUTTON VISIBILITY (Top Left) ---
+    const menuBtn = document.getElementById('menu-button');
+    if (menuBtn) {
+        // Hide on Login and OTP pages. Show everywhere else.
+        if (page === 'user-info' || page === 'otp') {
+            menuBtn.style.display = 'none';
+        } else {
+            menuBtn.style.display = 'flex';
+        }
     }
 
     if (updateHistory) history.pushState({ page: page }, '', `#${page}`);
@@ -969,11 +1123,6 @@ function showProfilePanel() {
     const profilePage = document.getElementById('profilePage');
     if (!profilePage.classList.contains('hidden')) { showPage('home'); return; }
 
-    const statsContainer = document.getElementById('profileStats');
-    if(statsContainer) {
-        statsContainer.innerHTML = `<div class="stat-item"><div class="stat-value">--</div><div class="stat-label">در حال بارگذاری...</div></div>`;
-    }
-
     showPage('profile');
 
     const profilePromise = fetch('/api/profile/').then(r => r.json());
@@ -981,7 +1130,6 @@ function showProfilePanel() {
 
     Promise.all([profilePromise, rankPromise])
         .then(([profileData, rankData]) => {
-            // 1. Populate the form fields (no change here)
             if (profileData.status === 'success') {
                 const p = profileData.profile;
                 document.getElementById('profilePhone').value = p.phone_number;
@@ -991,40 +1139,43 @@ function showProfilePanel() {
                 document.getElementById('profileAbout').value = p.about_me;
             }
 
-            // 2. THE FIX: Populate the stats section WITHOUT the rank.
-            if (rankData.status === 'success' && statsContainer) {
-                const isPremium = {{ user.is_premium|yesno:"true,false" }};
-                // Determine the text and badge for premium status
-                const premiumStatusText = isPremium ? 'ویژه' : 'رایگان';
-                const premiumBadge = isPremium ? '<span class="premium-badge">Premium</span>' : '';
-
-                statsContainer.innerHTML = `
-                    <div class="stat-item">
-                        <div class="stat-value">${rankData.assessment_count}</div>
-                        <div class="stat-label">آزمون تکمیل شده</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${premiumStatusText} ${premiumBadge}</div>
-                        <div class="stat-label">وضعیت حساب</div>
-                    </div>
-                `;
+            const statusEl = document.getElementById('profileSubStatus');
+            if (window.userIsPremium) {
+                statusEl.innerHTML = '<span style="color: #d97706;">✨ ویژه (Premium)</span>';
+            } else {
+                statusEl.innerHTML = '<span style="color: #666;">رایگان</span>';
             }
 
-            // 3. Setup the form's "Save" button and "Enter" key logic (no change here)
+            if (rankData.status === 'success') {
+                const statsContainer = document.getElementById('profileStats');
+                if (statsContainer) {
+                    statsContainer.innerHTML = `
+                        <div class="stat-item">
+                            <div class="stat-value">${rankData.assessment_count}</div>
+                            <div class="stat-label">آزمون تکمیل شده</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${window.userIsPremium ? 'ویژه ✨' : 'رایگان'}</div>
+                            <div class="stat-label">وضعیت حساب</div>
+                        </div>
+                    `;
+                }
+            }
+
             const saveBtn = document.getElementById('saveProfileBtn');
-            saveBtn.disabled = true; saveBtn.style.opacity = '0.5';
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.5';
             const form = document.getElementById('profileForm');
             form.addEventListener('input', () => {
-                saveBtn.disabled = false; saveBtn.style.opacity = '1'; saveBtn.style.cursor = 'pointer';
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
             }, { once: true });
-            
-            // ... (your existing Enter key logic can remain) ...
         })
         .catch(err => {
             console.error("Error loading profile data:", err);
-            if (statsContainer) {
-                statsContainer.innerHTML = `<div class="stat-item"><div class="stat-label" style="color:red;">خطا در بارگذاری</div></div>`;
-            }
+            const statusEl = document.getElementById('profileSubStatus');
+            if (statusEl) statusEl.innerHTML = '<span style="color: red;">خطا در بارگذاری</span>';
         });
 }
 
@@ -1046,6 +1197,30 @@ function saveProfile() {
     });
 }
 
+function closeSuccessModal() {
+    document.getElementById('successModal').classList.remove('active');
+    window.location.reload(); // Reload to update the premium state everywhere
+}
+
+function buySubscription() {
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/subscription/', { 
+        method: 'POST',
+        headers: {'X-CSRFToken': csrf}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // THE FIX: Show the nice modal instead of alert
+            document.getElementById('successModal').classList.add('active');
+            
+            // Optional: Trigger confetti if you add a library later
+        } else {
+            alert("خطا در ارتقا حساب.");
+        }
+    });
+}
+
 function redeemCode() {
     const code = document.getElementById('promoCodeInput').value;
     if (!code) return;
@@ -1055,8 +1230,12 @@ function redeemCode() {
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
         body: JSON.stringify({ code: code })
     }).then(r => r.json()).then(data => {
-        if (data.status === 'success') { alert("تبریک! حساب شما ارتقا یافت."); window.location.reload(); }
-        else { alert(data.message); }
+        if (data.status === 'success') {
+            // THE FIX: Show the nice modal
+            document.getElementById('successModal').classList.add('active');
+        } else {
+            alert(data.message);
+        }
     });
 }
 
@@ -1205,6 +1384,36 @@ function showReviewPage() {
 }
 function editAnswers() { showPage('skills-assessment'); }
 
+function loadSubscriptionPage() {
+    showPage('subscription');
+    
+    // Get all elements
+    const freeStatus = document.getElementById('freePlanStatus');
+    const proStatus = document.getElementById('proPlanStatus');
+    const proBtn = document.getElementById('proPlanBtn');
+
+    // Clear previous states
+    freeStatus.innerHTML = '';
+    proStatus.innerHTML = '';
+    proBtn.disabled = false;
+    proBtn.textContent = "خرید اشتراک";
+
+    const activeStatusHtml = `
+        <div style="background: hsl(var(--primary)); color: white; font-weight: bold; padding: 8px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            ✔ طرح فعلی شما
+        </div>`;
+    
+    if (window.userIsPremium) {
+        proStatus.innerHTML = activeStatusHtml;
+        proBtn.disabled = true;
+        proBtn.textContent = "فعال است";
+    } else {
+        freeStatus.innerHTML = activeStatusHtml;
+        // Make sure pro button is clickable
+        proBtn.onclick = function() { buySubscription(); };
+    }
+}
+
 /* ==========================================================================
    6. SUBMIT & RESULTS (Two-Step with Retry)
    ========================================================================== */
@@ -1279,7 +1488,8 @@ function performAnalysis(testId, resultId, submissionData, retryCount, intervalI
     .then(data => {
         clearInterval(intervalId);
         if (data.status === 'success') {
-            showResults(submissionData, data.analysis);
+            const testObj = questions.length > 0 ? {sources: data.sources} : {};
+            showResults(submissionData, data.analysis, currentTestName, data.sources);
         } else {
             throw new Error(data.message || "خطا در تحلیل");
         }
@@ -1301,14 +1511,13 @@ function performAnalysis(testId, resultId, submissionData, retryCount, intervalI
     });
 }
 
-function showResults(userData, analysis) {
+function showResults(userData, analysis, testName, sources) {
     const container = document.getElementById('resultsContent');
     if (!container) return;
 
     const userName = "{{ user.full_name|default:'کاربر' }}";
-    const title = currentTestName || "نتیجه آزمون";
-    document.querySelector('#resultsPage .results-header h1').textContent = `نتیجه: ${title}`;
-    document.querySelector('#resultsPage .results-header p').textContent = `${userName} عزیز، تحلیل اختصاصی شما آماده است.`;
+    const title = testName || "نتیجه آزمون";
+    document.querySelector('#resultsPage .results-header h1').textContent = `${title} نتیجه`;
 
     let html = '';
 
@@ -1372,6 +1581,31 @@ function showResults(userData, analysis) {
                 </ul>
             </div>`;
         }
+
+        if (sources && Array.isArray(sources) && sources.length > 0) {
+            html += `
+            <div class="results-card">
+                <h2 style="color: hsl(var(--primary)); margin-bottom: 20px; font-size: 1.2rem;">📚 منابع پیشنهادی</h2>
+                <div style="display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                    ${sources.map(source => `
+                        <a href="${source.link}" target="_blank" rel="noopener noreferrer" 
+                        style="text-decoration: none; padding: 18px; background: white; border: 2px solid hsl(var(--border)); border-radius: 12px; transition: all 0.3s; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;"
+                        onmouseover="this.style.borderColor='hsl(var(--primary))'; this.style.boxShadow='0 6px 16px rgba(139, 92, 246, 0.15)'; this.style.transform='translateY(-4px)';"
+                        onmouseout="this.style.borderColor='hsl(var(--border))'; this.style.boxShadow='none'; this.style.transform='translateY(0)';">
+                            <div>
+                                <h4 style="color: hsl(var(--primary)); margin-bottom: 10px; font-size: 1rem; font-weight: 600;">${source.title}</h4>
+                                <p style="font-size: 0.9rem; color: hsl(var(--muted-foreground)); line-height: 1.6;">${source.description}</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; color: hsl(var(--primary)); font-size: 0.85rem; font-weight: 600; margin-top: 14px;">
+                                <span>→ دیدن منبع</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+            `;
+        }
     }
     container.innerHTML = html;
 }
@@ -1389,6 +1623,7 @@ function loadHistory() {
         .then(data => {
             if (data.status === 'success' && data.history.length > 0) {
                 historyDataCache = data.history;
+                
                 container.innerHTML = data.history.map((item, index) => {
                     const hasAnalysis = item.analysis && Object.keys(item.analysis).length > 0;
                     const statusBadge = hasAnalysis 
@@ -1423,14 +1658,13 @@ function loadHistory() {
 function openHistoryItem(index) {
     const item = historyDataCache[index];
     if (!item) return;
-    currentHistoryItem = item; // Save to global variable
+    currentHistoryItem = item;
 
     showPage('history-review');
     document.getElementById('historyMeta').textContent = `آزمون: ${item.test_name} | تاریخ: ${item.date}`;
     
-    // Render Answers
     const responses = item.answers.responses || [];
-    document.getElementById('historyReviewContent').innerHTML = responses.map(r => `
+    let html = responses.map(r => `
         <div class="review-item">
             <p style="font-weight:500; margin-bottom:5px;">${r.question_text}</p>
             <div style="background:hsl(var(--secondary)); padding:8px; border-radius:6px; color:hsl(var(--primary));">
@@ -1438,21 +1672,15 @@ function openHistoryItem(index) {
             </div>
         </div>`).join('') || '<p>جزئیات موجود نیست.</p>';
 
-    // THE FIX: Handle the Analysis Button
+    document.getElementById('historyReviewContent').innerHTML = html;
+
     const btn = document.getElementById('viewAnalysisBtn');
-    
     if (item.analysis) {
         btn.style.display = 'inline-block';
         btn.textContent = "مشاهده تحلیل هوش مصنوعی";
-        
-        // DIRECTLY ASSIGN THE FUNCTION HERE
         btn.onclick = function() {
-            // 1. Switch Page
             showPage('results');
-            // 2. Render Data
-            showResults(item.answers, item.analysis);
-            
-            // 3. Fix Back Button behavior for History context
+            showResults(item.answers, item.analysis, item.test_name, item.sources);
             const backBtn = document.querySelector('#resultsPage .action-buttons .btn-secondary');
             if(backBtn) {
                 backBtn.onclick = function() { showPage('history-review'); };
@@ -1461,6 +1689,20 @@ function openHistoryItem(index) {
         };
     } else {
         btn.style.display = 'none';
+    }
+}
+
+function viewHistoryAnalysis() {
+    if (!currentHistoryItem || !currentHistoryItem.analysis) return;
+    
+    // Pass the test name from the history item to showResults
+    showResults(currentHistoryItem.answers, currentHistoryItem.analysis, currentHistoryItem.test_name, currentHistoryItem.sources);
+    
+    // Override the back button on the results page
+    const backBtn = document.querySelector('#resultsPage .action-buttons .btn-secondary');
+    if(backBtn) {
+        backBtn.onclick = function() { showPage('history-review'); };
+        backBtn.textContent = "بازگشت به مرور";
     }
 }
 
@@ -1488,6 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else showPage('home');
     }
 
+    window.userIsPremium = {{ user.is_premium|yesno:"true,false" }};
     // Primary Button Logic
     if (isAuthenticated && startTestId) {
         const btn = document.getElementById('startPrimaryBtn');

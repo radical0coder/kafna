@@ -18,20 +18,27 @@ class TestAdmin(admin.ModelAdmin):
 
 @admin.register(AssessmentResult)
 class AssessmentResultAdmin(admin.ModelAdmin):
-    list_display = ('user', 'test', 'created_at', 'has_ai_analysis')
+    list_display = ('get_user_display', 'test', 'created_at', 'has_ai_analysis')
     list_filter = ('test', 'user')
     readonly_fields = ('user', 'test', 'pretty_answers', 'pretty_ai_analysis', 'created_at')
     exclude = ('answers', 'ai_analysis')
 
+    def get_user_display(self, obj):
+        user = obj.user
+        full_name = user.get_full_name() if hasattr(user, 'get_full_name') else 'N/A'
+        if full_name == '':
+            full_name = getattr(user, 'full_name', 'N/A')
+        phone = getattr(user, 'phone_number', '')
+        return f"{phone} - {full_name}"
+    get_user_display.short_description = 'User'
+
     def pretty_answers(self, instance):
-        # ... (this function is unchanged)
         data = instance.answers
         pretty = json.dumps(data, indent=4, ensure_ascii=False)
         return format_html('<pre>{}</pre>', pretty)
     pretty_answers.short_description = 'User Answers'
 
     def pretty_ai_analysis(self, instance):
-        # ... (this function is unchanged)
         data = instance.ai_analysis
         if not data: return "No analysis."
         pretty = json.dumps(data, indent=4, ensure_ascii=False)

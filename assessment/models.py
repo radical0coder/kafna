@@ -33,6 +33,8 @@ class Test(models.Model):
     # Link to a job for level-measurement tests
     related_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True)
     
+    sources = models.JSONField(encoder=UnsafeJSONEncoder, null=True, blank=True, help_text="e.g., [{'title': 'Book Name', 'link': '...'}, ...]")
+    
     # Flag to identify the first test for all new users
     is_primary_assessment = models.BooleanField(default=False, help_text="Set to True for the one test all new users must take first.")
     

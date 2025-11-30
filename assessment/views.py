@@ -68,10 +68,11 @@ def get_ai_analysis_view(request, test_id):
                 user=request.user,
                 test=test,
                 answers=answers_data,
-                ai_analysis=ai_analysis
+                ai_analysis=ai_analysis,
+                sources=test.sources
             )
             
-            return JsonResponse({'status': 'success', 'analysis': ai_analysis})
+            return JsonResponse({'status': 'success', 'analysis': ai_analysis, 'sources': test.sources})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Only POST requests allowed'}, status=405)
@@ -95,25 +96,36 @@ def dashboard_api_view(request):
 
 @login_required
 def get_tests_list_api(request):
-    tests = Test.objects.filter(is_primary_assessment=False).values('id', 'name', 'description')
+    tests = Test.objects.filter(is_primary_assessment=False).values('id', 'name', 'description', 'sources')
     return JsonResponse({'status': 'success', 'tests': list(tests)})
 
 @login_required
 def get_user_history_api(request):
-    results = AssessmentResult.objects.filter(user=request.user).select_related('test').order_by('-created_at')
-    
-    history_data = []
-    for r in results:
-        history_data.append({
-            'id': r.id,
-            'test_name': r.test.name,
-            'date': r.created_at.strftime('%Y/%m/%d'),
-            'time': r.created_at.strftime('%H:%M'),
-            'answers': r.answers,
-            'analysis': r.ai_analysis
-        })
+    try:
+        results = AssessmentResult.objects.filter(user=request.user).select_related('test').order_by('-created_at')
         
-    return JsonResponse({'status': 'success', 'history': history_data})
+        history_data = []
+        for r in results:
+            sources = []
+            
+            if hasattr(r, 'sources') and r.sources:
+                sources = r.sources
+            elif hasattr(r.test, 'sources') and r.test.sources:
+                sources = r.test.sources
+            
+            history_data.append({
+                'id': r.id,
+                'test_name': r.test.name,
+                'date': r.created_at.strftime('%Y/%m/%d'),
+                'time': r.created_at.strftime('%H:%M'),
+                'answers': r.answers,
+                'analysis': r.ai_analysis,
+                'sources': sources
+            })
+            
+        return JsonResponse({'status': 'success', 'history': history_data})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @login_required
 def save_draft_view(request, test_id):
@@ -145,9 +157,10 @@ def perform_analysis_view(request, test_id, result_id):
             link_jobs_to_analysis(ai_analysis)
             
             result.ai_analysis = ai_analysis
+            result.sources = test.sources
             result.save()
             
-            return JsonResponse({'status': 'success', 'analysis': ai_analysis})
+            return JsonResponse({'status': 'success', 'analysis': ai_analysis, 'sources': test.sources})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error'}, status=405)
