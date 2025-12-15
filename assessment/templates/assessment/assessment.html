@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="14419088">
     <meta property="og:description" content="با تست استعدادیابی شغلی هوش مند کافنا، مسیر شغلی ایده‌آل خود را در کمتر از 10 دقیقه کشف کنید. تحلیل دقیق و پیشنهادات شغلی شخصی‌سازی شده.">
-    <meta property="og:image" content="{% static 'icon.jpg' %}">
+    <meta property="og:image" content="{% static 'icon.png' %}">
     <meta property="og:url" content="https://kafna.ir/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -15,7 +15,7 @@
     <title>14419088</title>
     <meta name="description" content="با تست استعدادیابی شغلی هوش مند کافنا، مسیر شغلی ایده‌آل خود را در کمتر از 10 دقیقه کشف کنید. تحلیل دقیق و پیشنهادات شغلی شخصی‌سازی شده.">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
-    <link rel="icon" href="{% static 'icon.jpg' %}?v=2" type="image/x-icon">
+    <link rel="icon" href="{% static 'icon.png' %}?v=2" type="image/x-icon">
     
     <style>
         * {
@@ -1026,6 +1026,7 @@ let currentTestId = null;
 let currentTestName = '';
 let historyDataCache = [];
 let currentHistoryItem = null;
+let primaryTestId = null;
 
 /* ==========================================================================
    3. NAVIGATION
@@ -1275,7 +1276,7 @@ function loadTestsMenu() {
 function startSpecificTest(testId, testName = 'آزمون') {
     const startTestId = "{{ start_test_id|default:'' }}"; 
     const isPremium = "{{ user.is_premium|yesno:'true,false' }}" === "true"; 
-    if (testId.toString() !== startTestId && !isPremium) {
+    if (testId.toString() === primaryTestId.toString() && !isPremium) {
         showPage('subscription'); return;
     }
     currentTestId = testId;
@@ -1734,6 +1735,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isAuthenticated && startTestId) {
         const btn = document.getElementById('startPrimaryBtn');
         if (btn) btn.onclick = () => startSpecificTest(startTestId, 'استعدادیابی');
+    }
+
+    primaryTestId = "{{ start_test_id|default:'' }}"; 
+    
+    if (isAuthenticated && primaryTestId) { // Check the global variable
+        const btn = document.getElementById('startPrimaryBtn');
+        if (btn) btn.setAttribute('onclick', `startSpecificTest(${primaryTestId}, 'استعدادیابی')`); // Pass name
     }
 
     linkEnterToNext('regFullName', 'userPhone');
