@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, PromoCode
 from assessment.models import AssessmentResult
 from django.urls import reverse
 from django.utils.html import format_html
@@ -51,3 +51,10 @@ class CustomUserAdmin(UserAdmin):
         # This counts how many AssessmentResult objects are linked to this user
         return obj.assessments.count()
     get_assessment_count.short_description = 'Assessments Taken'
+    
+    
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ('code', 'discount_percentage', 'fixed_discount_amount', 'is_active', 'created_at')
+    search_fields = ('code',)
+    list_filter = ('is_active',)

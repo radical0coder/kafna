@@ -1,5 +1,3 @@
-from django.db import models
-
 # accounts/models.py
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
@@ -45,3 +43,22 @@ class OTP(models.Model):
 
     def __str__(self):
         return f"OTP {self.code} for {self.phone_number}"
+
+
+class PromoCode(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="مثلا 100 برای 100 درصد تخفیف")
+    fixed_discount_amount = models.DecimalField(max_digits=10, decimal_places=0, null=True, blank=True, help_text="مثلا 50000 برای 50 هزار تومان")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.code
+    
+    def get_discount_amount(self, base_price):
+        if self.is_active:
+            if self.fixed_discount_amount:
+                return self.fixed_discount_amount
+            elif self.discount_percentage:
+                return base_price * (self.discount_percentage / 100)
+        return 0

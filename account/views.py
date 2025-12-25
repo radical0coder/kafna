@@ -4,15 +4,15 @@ import json
 import random
 from django.http import JsonResponse
 from django.contrib.auth import login
-from .models import CustomUser, OTP
+from .models import CustomUser, OTP, PromoCode
 from .sms_service import send_otp_sms
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from django.db.models import Count
+from django.db.models import Count, F
 from django.db.models.functions import Coalesce
-
+from pyexpat.errors import messages
 
 
 def request_otp_view(request):
@@ -189,3 +189,59 @@ def get_user_rank_api(request):
         'total_users': total_users,
         'assessment_count': current_user_assessment_count,
     })
+    
+    
+def normalize_persian_numerals(text):
+    if not text: return text
+    persian_to_latin = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
+    return text.translate(persian_to_latin)
+
+
+@login_required
+@require_http_methods(["POST"])
+def request_payment_view(request):
+    """
+    MVP MOCK: Instantly upgrades user to premium, now accepting amount and promo code.
+    """
+    try:
+        data = json.loads(request.body)
+        amount = data.get('amount', 0)
+        promo_code = data.get('promo_code', '')
+        
+        # This is your mock payment success logic
+        request.user.is_premium = True
+        request.user.save()
+        messages.success(request, f'حساب شما با موفقیت به نسخه ویژه ارتقا یافت! مبلغ پرداخت شده: {amount} تومان.')
+        return JsonResponse({'status': 'success', 'message': 'Account instantly upgraded!'})
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+    
+@login_required
+@require_http_methods(["POST"])
+def validate_promo_code_api(request):
+    """
+    API to validate a promo code and return its discount.
+    """
+    try:
+        data = json.loads(request.body)
+        code = data.get('code', '').strip().upper()
+        base_price = data.get('base_price', 0) # Frontend sends base price for calculation
+
+        if not code:
+            return JsonResponse({'status': 'error', 'message': 'کد تخفیف نمی‌تواند خالی باشد.'}, status=400)
+        
+        # Look up the promo code in the database
+        promo_obj = PromoCode.objects.filter(code=code, is_active=True).first()
+
+        if promo_obj:
+            discount = promo_obj.get_discount_amount(base_price)
+            return JsonResponse({'status': 'success', 'discount': discount})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'کد تخفیف نامعتبر یا منقضی شده است.'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

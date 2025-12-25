@@ -605,6 +605,97 @@
     color: #16a34a;
 }
 .success-icon svg { width: 40px; height: 40px; }
+.invoice-page {
+    font-family: "Vazirmatn", Arial, sans-serif !important; /* Ensure Vazirmatn is dominant */
+    margin: 40px;
+    color: #333;
+    max-width: 800px; /* Limit width for better readability */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.invoice-page h1 {
+    text-align: center;
+    color: hsl(var(--primary));
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+}
+.invoice-page h2 {
+    font-size: 1.2rem;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid hsl(var(--border));
+    padding-bottom: 5px;
+    color: hsl(var(--foreground));
+}
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    overflow: hidden; /* For rounded corners */
+}
+.invoice-table th,
+.invoice-table td {
+    padding: 12px 18px;
+    border: 1px solid hsl(var(--border));
+    text-align: right; /* Default to right for RTL */
+}
+.invoice-table .section-title {
+    background-color: hsl(var(--secondary));
+    font-weight: bold;
+    color: hsl(var(--foreground));
+    width: 30%; /* Give some width to titles */
+}
+.invoice-table .totals td {
+    text-align: left;
+    font-weight: bold;
+    color: hsl(var(--primary));
+    font-size: 1.1rem;
+}
+.invoice-table .totals .section-title {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--secondary));
+}
+.print-button {
+    padding: 12px 25px;
+    background-color: hsl(var(--primary)); /* Primary button style */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.print-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px hsla(var(--primary), 0.3);
+}
+.invoice-buttons-container {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+.invoice-buttons-container .print-button.secondary {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+}
+.invoice-buttons-container .print-button.secondary:hover {
+    background-color: hsl(var(--muted));
+    box-shadow: none;
+}
+@media print {
+    .print-button, .invoice-buttons-container { display: none; }
+    body { margin: 0; }
+    .invoice-page { box-shadow: none; border-radius: 0; }
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -870,7 +961,7 @@
                             <div id="proPlanStatus"></div> 
                             <div style="background: hsl(var(--primary)); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);">پیشنهاد ویژه</div>
                             <h3 style="color: hsl(var(--primary));">نسخه حرفه‌ای</h3>
-                            <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۹۹,۰۰۰ تومان</div>
+                            <div style="font-size: 2rem; font-weight: bold; margin: 20px 0;">۸۴۰,۰۰۰ تومان</div>
                             <ul style="list-style: none; line-height: 2; padding: 0;">
                                 <li>✅ تست استعدادیابی اولیه</li>
                                 <li>✅ مشاهده ۳ شغل پیشنهادی</li>
@@ -948,6 +1039,76 @@
                     <button class="btn btn-primary" style="width: 100%;" onclick="closeSuccessModal()">شروع یادگیری</button>
                 </div>
             </div>
+
+        <!-- In assessment.html, replace the entire invoicePage div -->
+        <div id="invoicePage" class="page-content hidden">
+            <div class="test-container" style="padding-top: 40px;">
+                <div class="invoice-page question-card"> <!-- Added question-card class -->
+                    <h1 class="invoice-page-title" style="text-align: center; color: hsl(var(--primary)); margin-bottom: 30px; font-size: 2.5rem;">صورتحساب اشتراک ویژه</h1>
+
+                    <p style="color: hsl(var(--foreground));"><strong>تاریخ:</strong> <span id="invoiceDate"></span></p>
+                    <p style="color: hsl(var(--foreground));"><strong>شماره فاکتور:</strong> <span id="invoiceNumber"></span></p>
+
+                    <h2 style="font-size: 1.2rem; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid hsl(var(--border)); padding-bottom: 5px; color: hsl(var(--foreground));">اطلاعات مشتری</h2>
+                    <table class="invoice-table">
+                        <tr>
+                            <td class="section-title">خریدار</td>
+                            <td id="invoiceCustomerName" style="color: hsl(var(--foreground));"></td>
+                        </tr>
+                        <tr>
+                            <td class="section-title">شماره تماس</td>
+                            <td id="invoiceCustomerPhone" style="color: hsl(var(--foreground));"></td>
+                        </tr>
+                    </table>
+
+                    <!-- In invoicePage, above the "اقلام صورتحساب" <h2> -->
+                    <div style="max-width: 400px; margin: 30px auto; text-align: center; padding: 20px; background: #e0f2fe; border-radius: 12px; border: 1px solid #90cdf4;">
+                        <h3 style="margin-bottom: 16px; font-size: 1.1rem; color: #2b6cb0;">کد تخفیف یا کد هدیه دارید؟</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="promoCodeInput" class="input-field" placeholder="کد را اینجا وارد کنید..." style="text-align: center; flex-grow: 1;">
+                            <button class="btn btn-primary" style="padding: 10px 15px; font-size: 0.95rem; white-space: nowrap;" onclick="applyPromoCode()">اعمال کد</button>
+                        </div>
+                        <p id="promoMessage" style="margin-top: 10px; font-size: 0.85rem; color: #3182ce;"></p>
+                    </div>
+
+                    <h2 style="font-size: 1.2rem; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid hsl(var(--border)); padding-bottom: 5px; color: hsl(var(--foreground));">اقلام صورتحساب</h2>
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th class="section-title" style="width: 70%; text-align: right;">شرح</th>
+                                <th class="section-title" style="text-align: right;">مبلغ (تومان)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceItems">
+                            <!-- Items will be inserted here by JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td class="section-title" style="text-align: left;">جمع جز</td>
+                                <td id="invoiceSubtotal" style="color: hsl(var(--foreground));"></td>
+                            </tr>
+                            <tr>
+                                <td class="section-title" style="text-align: left;">تخفیف</td>
+                                <td id="invoiceDiscount" style="color: hsl(var(--foreground));"></td>
+                            </tr>
+                            <tr>
+                                <td class="section-title" style="text-align: left;">۱۰٪ مالیات بر ارزش افزوده</td>
+                                <td id="invoiceTax" style="color: hsl(var(--foreground));"></td>
+                            </tr>
+                            <tr class="totals">
+                                <td class="section-title" style="text-align: left; color: hsl(var(--foreground));">کل قابل پرداخت</td>
+                                <td id="invoiceTotal" style="color: hsl(var(--primary)); font-size: 1.1rem; font-weight: bold;"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="invoice-buttons-container">
+                        <button id="payInvoiceBtn" class="btn btn-primary" style="background-color: #0f8e70;">پرداخت و فعال‌سازی اشتراک</button>
+                        <button onclick="window.print()" class="btn btn-secondary">پرینت فاکتور</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 </body>
 
 <script>
@@ -1042,7 +1203,7 @@ function showPage(page, updateHistory = true) {
         profile: 'profilePage', review: 'reviewPage',
         'tests-menu': 'testsMenuPage', history: 'historyPage',
         'history-review': 'historyReviewPage',
-        'subscription': 'subscriptionPage' 
+        'subscription': 'subscriptionPage' ,'invoice': 'invoicePage'
     }[page];
 
     const el = document.getElementById(id);
@@ -1073,8 +1234,14 @@ function showPage(page, updateHistory = true) {
 function navigateTo(page) { showPage(page); }
 
 window.onpopstate = function(event) {
-    if (event.state && event.state.page) showPage(event.state.page, false);
-    else showPage('{{ initial_page|default:"user-info" }}', false);
+    console.log("onpopstate triggered, state:", event.state);
+    if (event.state && event.state.page) {
+        showPage(event.state.page, false);
+    } else {
+        // Fallback: If browser history state is truly undefined/null, force a reload.
+        // This ensures Django reruns its initial_page logic.
+        window.location.reload(); 
+    }
 };
 
 /* ==========================================================================
@@ -1202,22 +1369,27 @@ function closeSuccessModal() {
     window.location.reload(); // Reload to update the premium state everywhere
 }
 
-function buySubscription() {
+function buySubscriptionConfirmed(finalAmount, promoCode = '') {
     const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    fetch('/api/subscription/', { 
+    
+    // We pass the final calculated amount and promo code to the backend
+    fetch('/api/request-payment/', {
         method: 'POST',
-        headers: {'X-CSRFToken': csrf}
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ amount: finalAmount, promo_code: promoCode })
     })
     .then(r => r.json())
     .then(data => {
         if (data.status === 'success') {
-            // THE FIX: Show the nice modal instead of alert
-            document.getElementById('successModal').classList.add('active');
-            
-            // Optional: Trigger confetti if you add a library later
+            alert("تبریک! حساب شما با موفقیت ارتقا یافت.");
+            window.location.reload(); 
         } else {
-            alert("خطا در ارتقا حساب.");
+            alert("خطا در ارتقا حساب: " + (data.message || "نامشخص"));
         }
+    })
+    .catch(err => {
+        console.error("Error in mock payment:", err);
+        alert("خطا در ارتباط با سرور برای ارتقا حساب.");
     });
 }
 
@@ -1239,6 +1411,109 @@ function redeemCode() {
     });
 }
 
+// In your <script> block, replace showInvoicePage
+function showInvoicePage() {
+    showPage('invoice');
+    
+    // --- Invoice State Management (NEW) ---
+    // These will store the current state of the invoice
+    window.invoiceState = {
+        basePrice: 840000, // The full price of the subscription (Rials)
+        discountAmount: 0,
+        promoCode: ''
+    };
+
+    // Helper to calculate and display invoice details
+    function updateInvoiceDisplay() {
+        const taxRate = 0.10; // 10%
+        const subtotal = window.invoiceState.basePrice;
+        let finalDiscount = window.invoiceState.discountAmount;
+
+        // Ensure discount doesn't exceed basePrice
+        if (finalDiscount > subtotal) {
+            finalDiscount = subtotal;
+        }
+
+        const taxableAmount = subtotal - finalDiscount;
+        const taxAmount = taxableAmount * taxRate;
+        const total = taxableAmount + taxAmount;
+
+        document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString('fa-IR');
+        document.getElementById('invoiceNumber').textContent = Math.floor(Math.random() * 1000000).toLocaleString('fa-IR');
+        document.getElementById('invoiceCustomerName').textContent = "{{ user.full_name|default:'کاربر مهمان' }}";
+        document.getElementById('invoiceCustomerPhone').textContent = "{{ user.phone_number|default:'نامشخص' }}";
+
+        document.getElementById('invoiceItems').innerHTML = `
+            <tr>
+                <td>اشتراک ویژه کافنا</td>
+                <td style="direction: ltr; text-align: left;">${subtotal.toLocaleString('fa-IR')}</td>
+            </tr>
+        `;
+
+        document.getElementById('invoiceSubtotal').textContent = subtotal.toLocaleString('fa-IR');
+        document.getElementById('invoiceDiscount').textContent = finalDiscount.toLocaleString('fa-IR');
+        document.getElementById('invoiceTax').textContent = taxAmount.toLocaleString('fa-IR');
+        document.getElementById('invoiceTotal').textContent = total.toLocaleString('fa-IR');
+
+        document.getElementById('payInvoiceBtn').onclick = function() {
+            if (total >= 0) {
+                buySubscriptionConfirmed(total, window.invoiceState.promoCode);
+            } else {
+                alert("خطا در محاسبه مبلغ. لطفا صفحه را رفرش کنید.");
+            }
+        };
+    }
+
+    // Function to apply promo code (now calls backend)
+    window.applyPromoCode = function() {
+        const codeInput = document.getElementById('promoCodeInput');
+        const promoMessageEl = document.getElementById('promoMessage');
+        const code = codeInput.value.trim().toUpperCase();
+        
+        if (!code) {
+            promoMessageEl.style.color = '#dc2626';
+            promoMessageEl.textContent = 'کد تخفیف نمی‌تواند خالی باشد.';
+            return;
+        }
+
+        promoMessageEl.style.color = '#3182ce';
+        promoMessageEl.textContent = 'در حال بررسی کد...';
+        
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch('/api/validate-promo-code/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({ code: code, base_price: window.invoiceState.basePrice })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.invoiceState.discountAmount = data.discount;
+                window.invoiceState.promoCode = code;
+                promoMessageEl.style.color = '#059669';
+                promoMessageEl.textContent = `کد تخفیف اعمال شد: ${data.discount.toLocaleString('fa-IR')} تومان تخفیف!`;
+                codeInput.disabled = true;
+                document.querySelector('#promoCodeInput + button').disabled = true;
+            } else {
+                window.invoiceState.discountAmount = 0;
+                window.invoiceState.promoCode = '';
+                promoMessageEl.style.color = '#dc2626';
+                promoMessageEl.textContent = data.message;
+            }
+            updateInvoiceDisplay(); // Update invoice with new discount
+        })
+        .catch(err => {
+            console.error("Error validating promo code:", err);
+            promoMessageEl.style.color = '#dc2626';
+            promoMessageEl.textContent = 'خطا در ارتباط با سرور.';
+            window.invoiceState.discountAmount = 0;
+            window.invoiceState.promoCode = '';
+            updateInvoiceDisplay();
+        });
+    };
+
+    updateInvoiceDisplay(); // Initial display
+}
 /* ==========================================================================
    5. TESTS & EXECUTION
    ========================================================================== */
@@ -1258,7 +1533,7 @@ function loadTestsMenu() {
                          onclick="startSpecificTest(${test.id}, '${test.name}')">
                         <div>
                             <h3 style="color: hsl(var(--primary)); margin-bottom: 8px;">${test.name}</h3>
-                            <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem; line-height: 1.6;">${test.description || 'سنجش تخصصی مهارت‌ها'}</p>
+                            <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem; line-height: 1.6;">${test.description}</p>
                         </div>
                         <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">شروع آزمون</button>
                     </div>
@@ -1387,30 +1662,38 @@ function editAnswers() { showPage('skills-assessment'); }
 function loadSubscriptionPage() {
     showPage('subscription');
     
-    // Get all elements
-    const freeStatus = document.getElementById('freePlanStatus');
-    const proStatus = document.getElementById('proPlanStatus');
+    const freeCard = document.getElementById('freePlanCard');
+    const freeBtn = document.getElementById('freePlanBtn');
+    const proCard = document.getElementById('proPlanCard');
     const proBtn = document.getElementById('proPlanBtn');
 
-    // Clear previous states
-    freeStatus.innerHTML = '';
-    proStatus.innerHTML = '';
-    proBtn.disabled = false;
-    proBtn.textContent = "خرید اشتراک";
-
-    const activeStatusHtml = `
-        <div style="background: hsl(var(--primary)); color: white; font-weight: bold; padding: 8px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-            ✔ طرح فعلی شما
-        </div>`;
-    
     if (window.userIsPremium) {
-        proStatus.innerHTML = activeStatusHtml;
+        // ... (existing premium logic is correct) ...
+        proCard.style.borderColor = '#10b981';
+        proCard.style.background = '#ecfdf5';
+        proBtn.textContent = "فعال است ✅";
         proBtn.disabled = true;
-        proBtn.textContent = "فعال است";
+        proBtn.style.background = '#10b981';
+        proBtn.style.opacity = '1';
+
+        freeCard.style.opacity = '0.5';
+        freeBtn.textContent = "طرح پایه";
+        freeBtn.disabled = true;
+        
     } else {
-        freeStatus.innerHTML = activeStatusHtml;
-        // Make sure pro button is clickable
-        proBtn.onclick = function() { buySubscription(); };
+        // User is FREE
+        freeCard.style.borderColor = '#666';
+        freeBtn.textContent = "طرح فعلی";
+        freeBtn.disabled = true;
+
+        proCard.style.borderColor = 'hsl(var(--primary))';
+        proCard.style.background = 'white';
+        proBtn.textContent = "خرید اشتراک";
+        proBtn.disabled = false;
+        proBtn.style.background = ''; 
+        
+        // THE FIX: "خرید اشتراک" button now goes to the invoice page
+        proBtn.onclick = function() { showInvoicePage(); }; 
     }
 }
 
