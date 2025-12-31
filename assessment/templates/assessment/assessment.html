@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="14419088">
+    <meta property="og:title" content="کافنا - تست استعداد یابی هوشمند">
     <meta property="og:description" content="با تست استعدادیابی شغلی هوش مند کافنا، مسیر شغلی ایده‌آل خود را در کمتر از 10 دقیقه کشف کنید. تحلیل دقیق و پیشنهادات شغلی شخصی‌سازی شده.">
     <meta property="og:image" content="{% static 'icon.png' %}">
     <meta property="og:url" content="https://kafna.ir/">
@@ -12,7 +12,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="14419088">
     <meta name="twitter:description" content="با تست استعدادیابی شغلی هوش مند کافنا، مسیر شغلی ایده‌آل خود را در کمتر از 10 دقیقه کشف کنید.">
-    <title>14419088</title>
+    <title>کافنا - تست استعداد یابی هوشمند </title>
     <meta name="description" content="با تست استعدادیابی شغلی هوش مند کافنا، مسیر شغلی ایده‌آل خود را در کمتر از 10 دقیقه کشف کنید. تحلیل دقیق و پیشنهادات شغلی شخصی‌سازی شده.">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
     <link rel="icon" href="{% static 'icon.png' %}?v=2" type="image/x-icon">
@@ -696,6 +696,54 @@
     body { margin: 0; }
     .invoice-page { box-shadow: none; border-radius: 0; }
 }
+/* --- Footer Styles --- */
+.app-footer {
+    position: fixed; /* Fixed to the bottom */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: hsl(var(--card)); /* Your card background */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 990; /* Below sidebar, above page content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+    text-align: center;
+    gap: 20px;
+}
+.app-footer.hidden {
+    display: none;
+}
+.app-footer p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: hsl(var(--muted-foreground));
+}
+.enamad-badge-footer {
+    /* Styles for the badge inside the footer */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.enamad-badge-footer iframe {
+    width: 80px; /* Slightly smaller for footer */
+    height: 100px; /* Slightly smaller for footer */
+    transform: scale(0.9); /* Fine-tune size */
+    transform-origin: center center;
+}
+.page-content > .test-container, /* For pages using test-container (most of them) */
+.page-content > .home-page > .home-container, /* For the home page */
+.page-content > .container /* For simple container pages like About/Contact */
+{
+    padding-bottom: 80px; /* Add padding equal to footer height + extra buffer */
+    box-sizing: border-box; /* Ensure padding is included in total height */
+}
+/* Ensure the page content itself can scroll */
+.page-content {
+    overflow-y: auto;
+    height: 100vh; /* Make sure it takes full height to allow scrolling */
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1109,6 +1157,18 @@
                 </div>
             </div>
         </div>
+
+        <footer id="app-footer" class="app-footer hidden">
+            <p>تمام حقوق برای کافنا محفوظ است © ۲۰۲۵</p>
+            <div class="enamad-badge-footer">
+                <!-- THE FIX: Reverting to <img> with referrer policy for 403/500 issues -->
+                <a referrerpolicy="no-referrer" target="_blank" href="https://trustseal.enamad.ir/?id=684752&Code=J0aH0K3PnWm0kr7uHmU3WICQZWzE4b5y">
+                    <img referrerpolicy="origin" src="https://trustseal.enamad.ir/logo.aspx?id=684752&Code=J0aH0K3PnWm0kr7uHmU3WICQZWzE4b5y" 
+                        alt="نماد اعتماد الکترونیکی" style="cursor:pointer; width:80px; height:auto;" 
+                        code="J0aH0K3PnWm0kr7uHmU3WICQZWzE4b5y">
+                </a>
+            </div>
+        </footer>
 </body>
 
 <script>
@@ -1225,6 +1285,16 @@ function showPage(page, updateHistory = true) {
             menuBtn.style.display = 'none';
         } else {
             menuBtn.style.display = 'flex';
+        }
+    }
+
+    const footer = document.getElementById('app-footer');
+    if (footer) {
+        // Show footer on Home, User Info (Login), and Invoice pages.
+        if (page === 'home' || page === 'user-info' || page === 'invoice') {
+            footer.classList.remove('hidden');
+        } else {
+            footer.classList.add('hidden');
         }
     }
 
